@@ -1,0 +1,206 @@
+import { sql } from 'drizzle-orm';
+import { check, index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+
+// Domain tables first, then Better Auth tables and the login throttle.
+// Conventions:
+//  - Dates (`paid_through`, `due_date`, `date`) are 'YYYY-MM-DD' text, JST calendar days.
+//  - Money is an integer in the currency's whole unit (JPY and VND have no minor unit).
+//  - Timestamps are integer epoch ms.
+
+export const CURRENCIES = ['JPY', 'VND'] as const;
+export type Currency = (typeof CURRENCIES)[number];
+
+export const PAYMENT_STATUSES = ['pending', 'approved', 'rejected'] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+export const REMINDER_KINDS = [
+  't-minus',
+  't0',
+  'overdue-1',
+  'overdue-2',
+  'overdue-3',
+  'overdue-4',
+  'overdue-5',
+  'manual',
+] as const;
+export type ReminderKind = (typeof REMINDER_KINDS)[number];
+
+const inList = (values: readonly string[]) => sql.raw(values.map((v) => `'${v}'`).join(', '));
+
+export const paymentAccounts = sqliteTable(
+  'payment_accounts',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    currency: text('currency').notNull(),
+    label: text('label').notNull(),
+    details: text('details').notNull(),
+  },
+  (t) => [check('payment_accounts_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`)],
+);
+
+export const subscriptions = sqliteTable(
+  'subscriptions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    currency: text('currency').notNull(),
+    pricePerMonth: integer('price_per_month').notNull(),
+    paymentAccountId: integer('payment_account_id')
+      .notNull()
+      .references(() => paymentAccounts.id),
+    // Days before due to send the first reminder; NULL means the app default (7).
+    remindDaysBefore: integer('remind_days_before'),
+  },
+  (t) => [
+    check('subscriptions_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`),
+    check('subscriptions_price_check', sql`${t.pricePerMonth} > 0`),
+    check('subscriptions_remind_check', sql`${t.remindDaysBefore} IS NULL OR ${t.remindDaysBefore} >= 0`),
+  ],
+);
+
+export const members = sqliteTable('members', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  // Stored lowercase; login matches on it.
+  email: text('email').notNull().unique(),
+  userId: text('user_id'),
+  archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+});
+
+export const memberships = sqliteTable(
+  'memberships',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => members.id),
+    subscriptionId: integer('subscription_id')
+      .notNull()
+      .references(() => subscriptions.id),
+    // Per-month amount in the subscription's currency.
+    monthlyShare: integer('monthly_share').notNull(),
+    isFamily: integer('is_family', { mode: 'boolean' }).notNull().default(false),
+    // Paid up to (and including the day before) this date; also the next due date.
+    paidThrough: text('paid_through').notNull(),
+    archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [
+    uniqueIndex('memberships_member_subscription_uq').on(t.memberId, t.subscriptionId),
+    check('memberships_share_check', sql`${t.monthlyShare} >= 0`),
+  ],
+);
+
+export const payments = sqliteTable(
+  'payments',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    membershipId: integer('membership_id')
+      .notNull()
+      .references(() => memberships.id),
+    monthsCovered: integer('months_covered').notNull(),
+    amount: integer('amount').notNull(),
+    status: text('status').notNull().default('pending'),
+    note: text('note'),
+    rejectReason: text('reject_reason'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    decidedAt: integer('decided_at', { mode: 'timestamp_ms' }),
+  },
+  (t) => [
+    index('payments_membership_idx').on(t.membershipId),
+    // A member can have at most one unreviewed request per membership.
+    uniqueIndex('payments_one_pending_uq').on(t.membershipId).where(sql`${t.status} = 'pending'`),
+    check('payments_status_check', sql`${t.status} IN (${inList(PAYMENT_STATUSES)})`),
+    check('payments_months_check', sql`${t.monthsCovered} >= 1`),
+    check('payments_amount_check', sql`${t.amount} > 0`),
+  ],
+);
+
+export const reminderLog = sqliteTable(
+  'reminder_log',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    membershipId: integer('membership_id')
+      .notNull()
+      .references(() => memberships.id),
+    dueDate: text('due_date').notNull(),
+    kind: text('kind').notNull(),
+    sentAt: integer('sent_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [
+    // Cron milestones send once per (membership, due date); manual sends may repeat.
+    uniqueIndex('reminder_log_once_uq')
+      .on(t.membershipId, t.dueDate, t.kind)
+      .where(sql`${t.kind} != 'manual'`),
+    check('reminder_log_kind_check', sql`${t.kind} IN (${inList(REMINDER_KINDS)})`),
+  ],
+);
+
+export const fxRates = sqliteTable(
+  'fx_rates',
+  {
+    date: text('date').notNull(),
+    base: text('base').notNull(),
+    quote: text('quote').notNull(),
+    rate: real('rate').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.date, t.base, t.quote] }), check('fx_rates_rate_check', sql`${t.rate} > 0`)],
+);
+
+// ---- Better Auth tables ----
+// Date fields use integer(timestamp_ms) so Drizzle converts JS Date <-> integer (D1 rejects Date objects).
+
+export const user = sqliteTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull().default(''),
+  email: text('email').notNull().unique(),
+  emailVerified: integer('emailVerified', { mode: 'boolean' }).notNull().default(false),
+  image: text('image'),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const session = sqliteTable('session', {
+  id: text('id').primaryKey(),
+  expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }).notNull(),
+  token: text('token').notNull().unique(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
+  ipAddress: text('ipAddress'),
+  userAgent: text('userAgent'),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+});
+
+export const account = sqliteTable('account', {
+  id: text('id').primaryKey(),
+  accountId: text('accountId').notNull(),
+  providerId: text('providerId').notNull(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  accessToken: text('accessToken'),
+  refreshToken: text('refreshToken'),
+  idToken: text('idToken'),
+  accessTokenExpiresAt: integer('accessTokenExpiresAt', { mode: 'timestamp_ms' }),
+  refreshTokenExpiresAt: integer('refreshTokenExpiresAt', { mode: 'timestamp_ms' }),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const verification = sqliteTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }).notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }),
+});
+
+// Cooldown for login emails: one row per allowed email, last send time in epoch ms.
+export const loginThrottle = sqliteTable('login_throttle', {
+  email: text('email').primaryKey(),
+  lastSentAt: integer('last_sent_at').notNull(),
+});
