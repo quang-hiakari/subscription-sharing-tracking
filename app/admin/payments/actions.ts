@@ -1,0 +1,30 @@
+'use server';
+
+import { redirect } from 'next/navigation';
+import { requireAdmin } from '@/lib/auth/require-role';
+import { getDB } from '@/lib/db';
+import type { FormState } from '@/lib/form-state';
+import { notifyPaymentRejected } from '@/lib/payments/notify';
+import { approvePayment, rejectPayment } from '@/lib/payments/service';
+import { parseForm, rejectSchema } from '@/lib/validation/schemas';
+
+const QUEUE = '/admin/payments';
+
+export async function approve(paymentId: number, _prev: FormState, _formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const result = await approvePayment(getDB(), paymentId, new Date());
+  if (!result.ok) return { error: result.error };
+  redirect(QUEUE);
+}
+
+export async function reject(paymentId: number, _prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = parseForm(rejectSchema, formData);
+  if ('error' in parsed) return { error: parsed.error };
+
+  const db = getDB();
+  const result = await rejectPayment(db, paymentId, parsed.data.reason, new Date());
+  if (!result.ok) return { error: result.error };
+  await notifyPaymentRejected(db, paymentId);
+  redirect(QUEUE);
+}
