@@ -1,0 +1,22 @@
+name = "subscription-reminder-cron"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+# 00:00 UTC = 09:00 JST. Reminder logic computes "today" in JST itself.
+crons = ["0 0 * * *"]
+
+# Same database as the Pages app (migrations are applied from the app, not from here).
+[[d1_databases]]
+binding = "DB"
+database_name = "subscription-tracker-db"
+# Replace with the id from: wrangler d1 create subscription-tracker-db
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[vars]
+# Public URL of the app, used for links in emails.
+APP_URL = "http://localhost:3000"
+# Sender on a domain verified in Resend.
+RESEND_FROM_EMAIL = "Tracker <noreply@example.com>"
+# Secret, set with: wrangler secret put RESEND_API_KEY -c worker/wrangler.toml
