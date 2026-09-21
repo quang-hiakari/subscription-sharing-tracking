@@ -1,0 +1,41 @@
+{
+  "name": "subscription-sharing-tracking",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "pages:build": "npx @cloudflare/next-on-pages@1",
+    "preview": "pnpm pages:build && wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat",
+    "deploy": "pnpm pages:build && wrangler pages deploy .vercel/output/static --branch main"
+  },
+  "dependencies": {
+    "better-auth": "^1.7.5",
+    "drizzle-orm": "^0.45.2",
+    "next": "15.5.18",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@cloudflare/next-on-pages": "^1",
+    "@cloudflare/workers-types": "^4.20260515.1",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.18",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^2",
+    "wrangler": "^4.91.0"
+  }
+}
