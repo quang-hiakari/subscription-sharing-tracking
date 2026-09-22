@@ -11,7 +11,7 @@ export interface ReminderEmailInput {
   dueDate: string;
   /** Negative once overdue. */
   daysUntilDue: number;
-  accountLabel: string;
+  /** Pre-formatted lines (see `formatAccountLines`), joined with `\n`. */
   accountDetails: string;
   appUrl: string;
 }
@@ -39,7 +39,7 @@ export function buildReminderEmail(i: ReminderEmailInput): { subject: string; ht
       ${row('Subscription', escapeHtml(i.subscriptionName))}
       ${row('Hạn thanh toán', escapeHtml(i.dueDate))}
       ${row('Mỗi tháng', escapeHtml(formatMoney(i.monthlyShare, i.currency)))}
-      ${row('Chuyển tiền tới', `<strong>${escapeHtml(i.accountLabel)}</strong><br>${escapeHtml(i.accountDetails).replace(/\n/g, '<br>')}`)}
+      ${row('Chuyển tiền tới', escapeHtml(i.accountDetails).replace(/\n/g, '<br>'))}
     </table>
     <p style="margin:16px 0 0;font-size:13px;color:#666">Đã chuyển rồi? Đăng nhập, chọn "Tôi đã chuyển tiền" để báo cho chủ nhóm.</p>
     ${emailButton(`${i.appUrl}/login`, 'Mở trang thanh toán')}`);

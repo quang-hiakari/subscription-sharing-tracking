@@ -12,7 +12,7 @@ Both the Pages app and the Worker use the same D1 database. Migrations are appli
 
 | Table | Purpose |
 |---|---|
-| `payment_accounts` | Where to send money: currency, label, free-text details |
+| `payment_accounts` | Where to send money. Currency doubles as country: JPY (Japan) needs `branch_name`; VND (Vietnam) allows an optional QR image path (`qr_image_path`, e.g. `/qr/vcb.png` — a static file added to `public/qr/`, not uploaded). Both need `bank_name`, `account_number`, `account_holder_name`. |
 | `subscriptions` | Name, currency, price per month, account, optional `remind_days_before` |
 | `members` | Name, unique lowercase email, `archived` |
 | `memberships` | Member in a subscription: `monthly_share`, `is_family`, **`paid_through`** (next due date), `archived` |

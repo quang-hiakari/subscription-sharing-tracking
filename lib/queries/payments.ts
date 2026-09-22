@@ -58,8 +58,11 @@ export async function getMyMemberships(memberId: number) {
       isFamily: memberships.isFamily,
       paidThrough: memberships.paidThrough,
       remindDaysBefore: subscriptions.remindDaysBefore,
-      accountLabel: paymentAccounts.label,
-      accountDetails: paymentAccounts.details,
+      accountBankName: paymentAccounts.bankName,
+      accountBranchName: paymentAccounts.branchName,
+      accountNumber: paymentAccounts.accountNumber,
+      accountHolderName: paymentAccounts.accountHolderName,
+      accountQrImagePath: paymentAccounts.qrImagePath,
     })
     .from(memberships)
     .innerJoin(members, eq(memberships.memberId, members.id))

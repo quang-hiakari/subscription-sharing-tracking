@@ -2,6 +2,7 @@ import type { Currency } from '../db-schema';
 import type { Mail } from '../email/resend';
 import { buildReminderEmail } from '../email/reminder-email';
 import { daysBetween, todayJst } from '../format/date';
+import { formatAccountLines } from '../format/payment-account';
 import type { ServiceResult } from '../payments/service';
 import { dueReminderKind } from './compute';
 
@@ -36,8 +37,11 @@ interface Candidate {
   subscription_name: string;
   currency: Currency;
   remind_days_before: number | null;
-  account_label: string;
-  account_details: string;
+  account_bank_name: string;
+  account_branch_name: string | null;
+  account_number: string;
+  account_holder_name: string;
+  account_qr_image_path: string | null;
   has_pending: number;
   manual_today: number;
 }
@@ -47,7 +51,9 @@ const CANDIDATE_SQL = `
   SELECT ms.id, ms.monthly_share, ms.is_family, ms.paid_through, ms.archived, m.archived AS member_archived,
          m.name AS member_name, m.email AS member_email,
          s.name AS subscription_name, s.currency, s.remind_days_before,
-         pa.label AS account_label, pa.details AS account_details,
+         pa.bank_name AS account_bank_name, pa.branch_name AS account_branch_name,
+         pa.account_number AS account_number, pa.account_holder_name AS account_holder_name,
+         pa.qr_image_path AS account_qr_image_path,
          EXISTS (SELECT 1 FROM payments p WHERE p.membership_id = ms.id AND p.status = 'pending') AS has_pending,
          EXISTS (SELECT 1 FROM reminder_log r WHERE r.membership_id = ms.id AND r.kind = 'manual' AND r.sent_at >= ?) AS manual_today
   FROM memberships ms
@@ -65,8 +71,14 @@ function reminderMail(c: Candidate, today: string, appUrl: string): Mail {
     monthlyShare: c.monthly_share,
     dueDate: c.paid_through,
     daysUntilDue: daysBetween(today, c.paid_through),
-    accountLabel: c.account_label,
-    accountDetails: c.account_details,
+    accountDetails: formatAccountLines({
+      currency: c.currency,
+      bankName: c.account_bank_name,
+      branchName: c.account_branch_name,
+      accountNumber: c.account_number,
+      accountHolderName: c.account_holder_name,
+      qrImagePath: c.account_qr_image_path,
+    }).join('\n'),
     appUrl,
   });
   return { to: c.member_email, subject, html };

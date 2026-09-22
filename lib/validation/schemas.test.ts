@@ -17,14 +17,46 @@ function fd(entries: Record<string, string>): FormData {
 }
 
 describe('paymentAccountSchema', () => {
-  it('accepts a valid account and trims', () => {
-    const r = parseForm(paymentAccountSchema, fd({ currency: 'JPY', label: '  Yucho ', details: ' 1234 ' }));
-    expect(r).toEqual({ data: { currency: 'JPY', label: 'Yucho', details: '1234' } });
+  const jp = { currency: 'JPY', label: '  Yucho ', bankName: ' Yucho Bank ', branchName: ' 008 ', accountNumber: ' 1234567 ', accountHolderName: ' NGUYEN A ' };
+  const vn = { currency: 'VND', label: 'VCB', bankName: 'Vietcombank', accountNumber: '0123456789', accountHolderName: 'NGUYEN A' };
+
+  it('accepts a valid Japan account, trims, and keeps the branch', () => {
+    expect(parseForm(paymentAccountSchema, fd(jp))).toEqual({
+      data: { currency: 'JPY', label: 'Yucho', bankName: 'Yucho Bank', branchName: '008', accountNumber: '1234567', accountHolderName: 'NGUYEN A', qrImagePath: null },
+    });
+  });
+
+  it('accepts a valid Vietnam account with no branch (nulled even if sent)', () => {
+    expect(parseForm(paymentAccountSchema, fd({ ...vn, branchName: 'ignored' }))).toEqual({
+      data: { currency: 'VND', label: 'VCB', bankName: 'Vietcombank', branchName: null, accountNumber: '0123456789', accountHolderName: 'NGUYEN A', qrImagePath: null },
+    });
+  });
+
+  it('requires a branch for Japan but not for Vietnam', () => {
+    expect(parseForm(paymentAccountSchema, fd({ ...jp, branchName: '' }))).toEqual({ error: 'Nhập tên chi nhánh' });
+    expect('data' in parseForm(paymentAccountSchema, fd(vn))).toBe(true);
+  });
+
+  it('accepts a Vietnam QR path and rejects a malformed one', () => {
+    expect(parseForm(paymentAccountSchema, fd({ ...vn, qrImagePath: '/qr/vcb-9999.png' }))).toMatchObject({
+      data: { qrImagePath: '/qr/vcb-9999.png' },
+    });
+    expect('error' in parseForm(paymentAccountSchema, fd({ ...vn, qrImagePath: 'not-a-path' }))).toBe(true);
+    expect('error' in parseForm(paymentAccountSchema, fd({ ...vn, qrImagePath: '/qr/x.gif' }))).toBe(true);
+  });
+
+  it('drops the QR path when the account is switched to Japan', () => {
+    expect(parseForm(paymentAccountSchema, fd({ ...jp, qrImagePath: '/qr/leftover.png' }))).toMatchObject({
+      data: { qrImagePath: null },
+    });
   });
 
   it('rejects unsupported currency and empty fields', () => {
-    expect(parseForm(paymentAccountSchema, fd({ currency: 'USD', label: 'x', details: 'y' }))).toEqual({ error: 'Chọn loại tiền' });
-    expect(parseForm(paymentAccountSchema, fd({ currency: 'VND', label: '  ', details: 'y' }))).toEqual({ error: 'Nhập tên tài khoản' });
+    expect(parseForm(paymentAccountSchema, fd({ ...vn, currency: 'USD' }))).toEqual({ error: 'Chọn loại tiền' });
+    expect(parseForm(paymentAccountSchema, fd({ ...vn, label: '  ' }))).toEqual({ error: 'Nhập tên tài khoản' });
+    expect(parseForm(paymentAccountSchema, fd({ ...vn, bankName: '' }))).toEqual({ error: 'Nhập tên ngân hàng' });
+    expect(parseForm(paymentAccountSchema, fd({ ...vn, accountNumber: '' }))).toEqual({ error: 'Nhập số tài khoản' });
+    expect(parseForm(paymentAccountSchema, fd({ ...vn, accountHolderName: '' }))).toEqual({ error: 'Nhập tên chủ tài khoản' });
   });
 });
 

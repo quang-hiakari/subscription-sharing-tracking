@@ -31,11 +31,25 @@ export const paymentAccounts = sqliteTable(
   'payment_accounts',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Currency doubles as the country: JPY = Japan account fields, VND = Vietnam account fields.
     currency: text('currency').notNull(),
     label: text('label').notNull(),
-    details: text('details').notNull(),
+    bankName: text('bank_name').notNull(),
+    // Japan only (e.g. 支店名); NULL for VND accounts.
+    branchName: text('branch_name'),
+    accountNumber: text('account_number').notNull(),
+    accountHolderName: text('account_holder_name').notNull(),
+    // Vietnam only, optional: path to a static QR image under public/ (e.g. "/qr/vcb.png").
+    // The file itself is a project asset, added to the repo — no upload, no object storage.
+    qrImagePath: text('qr_image_path'),
   },
-  (t) => [check('payment_accounts_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`)],
+  (t) => [
+    check('payment_accounts_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`),
+    check(
+      'payment_accounts_country_fields_check',
+      sql`(${t.currency} = 'JPY' AND ${t.qrImagePath} IS NULL) OR (${t.currency} = 'VND' AND ${t.branchName} IS NULL)`,
+    ),
+  ],
 );
 
 export const subscriptions = sqliteTable(

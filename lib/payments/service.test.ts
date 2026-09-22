@@ -11,7 +11,8 @@ let raw: ReturnType<typeof createTestD1>['raw'];
 beforeEach(() => {
   ({ db, raw } = createTestD1());
   raw.exec(`
-    INSERT INTO payment_accounts (currency, label, details) VALUES ('JPY', 'Yucho', '123');
+    INSERT INTO payment_accounts (currency, label, bank_name, branch_name, account_number, account_holder_name)
+      VALUES ('JPY', 'Yucho', 'Yucho Bank', 'Main', '123', 'NGUYEN A');
     INSERT INTO subscriptions (name, currency, price_per_month, payment_account_id) VALUES ('Youtube', 'JPY', 1200, 1), ('M365', 'JPY', 900, 1);
     INSERT INTO members (name, email) VALUES ('An', 'an@x.com'), ('Binh', 'binh@x.com');
     INSERT INTO memberships (member_id, subscription_id, monthly_share, is_family, paid_through) VALUES

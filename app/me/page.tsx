@@ -1,5 +1,6 @@
 import { ActionForm } from '@/components/action-form';
 import { FxNote, Money } from '@/components/money';
+import { PaymentAccountDetails } from '@/components/payment-account-details';
 import { PaymentFields } from '@/components/payment-fields';
 import { PaymentHistory, PaymentStatusBadge } from '@/components/payment-history';
 import { StatusBadge } from '@/components/status-badge';
@@ -52,15 +53,25 @@ export default async function MePage() {
                 <>
                   <dt className="text-gray-500">Hạn tiếp theo</dt>
                   <dd className="font-medium">{item.paidThrough}</dd>
-                  <dt className="text-gray-500">Chuyển tiền tới</dt>
-                  <dd className="whitespace-pre-line">
-                    <span className="font-medium">{item.accountLabel}</span>
-                    {'\n'}
-                    {item.accountDetails}
-                  </dd>
                 </>
               )}
             </dl>
+
+            {!item.isFamily && (
+              <div>
+                <h3 className="mb-2 text-sm font-medium text-gray-500">Chuyển tiền tới</h3>
+                <PaymentAccountDetails
+                  account={{
+                    currency,
+                    bankName: item.accountBankName,
+                    branchName: item.accountBranchName,
+                    accountNumber: item.accountNumber,
+                    accountHolderName: item.accountHolderName,
+                    qrImagePath: item.accountQrImagePath,
+                  }}
+                />
+              </div>
+            )}
 
             {item.isFamily ? (
               <p className="text-sm text-gray-500">Bạn là người nhà nên không cần thanh toán.</p>

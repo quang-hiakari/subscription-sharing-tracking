@@ -8,8 +8,7 @@ const base = {
   currency: 'JPY' as const,
   monthlyShare: 300,
   dueDate: '2026-10-01',
-  accountLabel: 'Yucho',
-  accountDetails: 'Yucho 1234567\nNguyen A',
+  accountDetails: 'Ngân hàng: Yucho\nSố tài khoản: 1234567\nChủ tài khoản: Nguyen A',
   appUrl: 'https://app.example',
 };
 
@@ -19,7 +18,7 @@ describe('buildReminderEmail', () => {
     expect(subject).toBe('Sắp đến hạn thanh toán Youtube: còn 5 ngày');
     expect(html).toContain('2026-10-01');
     expect(html).toContain('300');
-    expect(html).toContain('Yucho 1234567<br>Nguyen A');
+    expect(html).toContain('Ngân hàng: Yucho<br>Số tài khoản: 1234567<br>Chủ tài khoản: Nguyen A');
     expect(html).toContain('https://app.example/login');
   });
 

@@ -32,7 +32,8 @@ beforeEach(() => {
   mails = [];
   failFor = null;
   raw.exec(`
-    INSERT INTO payment_accounts (currency, label, details) VALUES ('JPY', 'Yucho', 'Yucho 1234567');
+    INSERT INTO payment_accounts (currency, label, bank_name, branch_name, account_number, account_holder_name)
+      VALUES ('JPY', 'Yucho', 'Yucho Bank', 'Main', '1234567', 'NGUYEN A');
     INSERT INTO subscriptions (name, currency, price_per_month, payment_account_id, remind_days_before) VALUES
       ('Youtube', 'JPY', 1200, 1, NULL), ('M365', 'JPY', 900, 1, 14);
     INSERT INTO members (name, email) VALUES
@@ -54,7 +55,8 @@ describe('runReminders', () => {
     expect(mails).toHaveLength(1);
     expect(mails[0].to).toBe('an@x.com');
     expect(mails[0].subject).toBe('Sắp đến hạn thanh toán Youtube: còn 4 ngày');
-    expect(mails[0].html).toContain('Yucho 1234567');
+    expect(mails[0].html).toContain('1234567');
+    expect(mails[0].html).toContain('Yucho Bank');
     expect(mails[0].html).toContain(`${APP}/login`);
     expect(logs()).toEqual([{ ms: 1, due: '2026-09-25', kind: 't-minus' }]);
 

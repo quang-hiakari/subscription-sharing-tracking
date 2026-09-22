@@ -9,12 +9,37 @@ import { MAX_MONTHS_PER_PAYMENT } from '@/lib/payments/service';
 const currency = z.enum(CURRENCIES, { errorMap: () => ({ message: 'Chọn loại tiền' }) });
 const id = (msg: string) => z.coerce.number({ invalid_type_error: msg }).int(msg).positive(msg);
 const money = (msg: string) => z.coerce.number({ invalid_type_error: msg }).int(msg);
+// Missing and blank both mean "not provided".
+const emptyToNull = (v: unknown) => (v == null || (typeof v === 'string' && v.trim() === '') ? null : v);
 
-export const paymentAccountSchema = z.object({
-  currency,
-  label: z.string().trim().min(1, 'Nhập tên tài khoản').max(100),
-  details: z.string().trim().min(1, 'Nhập thông tin nhận tiền').max(500),
-});
+// Bank fields differ by country: currency doubles as the country (JPY = Japan, VND = Vietnam).
+// qrImagePath points at a static file under public/ (added to the repo, not uploaded here).
+const QR_PATH_RE = /^\/qr\/[\w.-]+\.(png|jpe?g|webp)$/i;
+export const paymentAccountSchema = z
+  .object({
+    currency,
+    label: z.string().trim().min(1, 'Nhập tên tài khoản').max(100),
+    bankName: z.string().trim().min(1, 'Nhập tên ngân hàng').max(100),
+    // Required for JPY, absent for VND; enforced below since it depends on currency.
+    branchName: z.preprocess(emptyToNull, z.string().trim().max(100).nullable()),
+    accountNumber: z.string().trim().min(1, 'Nhập số tài khoản').max(50),
+    accountHolderName: z.string().trim().min(1, 'Nhập tên chủ tài khoản').max(100),
+    // VND only, optional; enforced below since it depends on currency.
+    qrImagePath: z.preprocess(
+      emptyToNull,
+      z.string().trim().regex(QR_PATH_RE, 'Đường dẫn phải dạng /qr/ten-file.png (đã thêm file vào public/qr/)').nullable(),
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (data.currency === 'JPY' && !data.branchName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Nhập tên chi nhánh', path: ['branchName'] });
+    }
+  })
+  .transform((data) => ({
+    ...data,
+    branchName: data.currency === 'JPY' ? data.branchName : null,
+    qrImagePath: data.currency === 'VND' ? data.qrImagePath : null,
+  }));
 
 export const subscriptionSchema = z.object({
   name: z.string().trim().min(1, 'Nhập tên subscription').max(100),
@@ -59,9 +84,6 @@ export function parseForm<S extends z.ZodTypeAny>(schema: S, formData: FormData)
   if (parsed.success) return { data: parsed.data };
   return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
 }
-
-// Missing and blank both mean "not provided".
-const emptyToNull = (v: unknown) => (v == null || (typeof v === 'string' && v.trim() === '') ? null : v);
 
 // A payment a member reports or an admin records. Empty amount means "monthly share x months".
 export const paymentInputSchema = z.object({

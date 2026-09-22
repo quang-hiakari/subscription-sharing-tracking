@@ -70,3 +70,39 @@ Verified by driving the real pages/forms against the dev server with an admin se
 ## Risk Assessment
 
 - Scope creep in UI: keep tables + simple forms, no pagination (few rows).
+
+## Follow-up — 2026-09-22: structured, per-country bank fields
+
+`payment_accounts.details` (one free-text blob) replaced with structured fields, country-specific by
+currency (currency already forced a 1:1 mapping to country in this app: JPY = Japan, VND = Vietnam):
+`bank_name`, `branch_name` (Japan only, required there), `account_number`, `account_holder_name`, and
+`qr_image_path` (Vietnam only, optional). `label` stays as an admin-only nickname (not shown to members).
+
+QR image storage went through three designs before landing, each on direct user instruction:
+R2 bucket + session-gated serving route → inline base64 data URL in the D1 row → **static file under
+`public/qr/`, referenced by path** (final). The static-asset approach means adding or changing a QR
+is a code change (add the file, commit, deploy), not an in-app upload — the trade-off the user asked
+for over any storage/upload machinery. `public/qr/README.md` documents the step for future edits.
+
+- Migration `0003_payment-account-country-fields.sql`: SQLite table-recreate (drizzle-kit generated
+  the shell; the generated `INSERT ... SELECT` referenced the new columns on the *old* table, which
+  doesn't have them — hand-fixed to backfill existing rows with a `(cần cập nhật)` placeholder for the
+  three required text fields instead). Verified on a standalone `node:sqlite` run (re-run after each
+  redesign): old-shape rows migrate to the placeholder, the CHECK rejects JPY+QR and VND+branch in
+  both directions, valid JP/VN inserts still work.
+- `qrImagePath` is plain text validated against `^/qr/[\w.-]+\.(png|jpe?g|webp)$` in
+  `lib/validation/schemas.ts`; forced to `null` server-side when currency is JPY (symmetric with
+  `branchName` forced to `null` for VND). No upload endpoint, no file validation code, no Cloudflare
+  binding.
+- `components/payment-account-details.tsx` (structured display + `<img src={qrImagePath}>`) used by
+  the accounts list/edit pages and `/me`; `lib/format/payment-account.ts` `formatAccountLines()`
+  reused by the reminder email (`lib/reminders/run.ts`) — email lists bank/account/holder text and,
+  if a QR path exists, "(Có mã QR trong app, đăng nhập để xem)" rather than embedding the image.
+- Verified end to end on a throwaway dev server with a real PNG committed to `public/qr/`: JPY create
+  without a branch rejected, an invalid QR path rejected, JPY with a branch and VND with a valid QR
+  path both created and displayed correctly (list, edit-page live preview, `/me`, and a triggered
+  reminder email all showed the right fields/image). 115 unit tests (up from 45; new: `payment-account`
+  formatting, `paymentAccountSchema` branch/country/QR-path rules), `tsc`, `eslint`, `next build`,
+  `pages:build`, worker `deploy --dry-run` pass.
+- Not yet applied to any deployed/remote D1 (still pre-deploy); local dev DB re-migrated cleanly each
+  time. Migration 0003 was rewritten in place (not layered as 0004/0005) since it was never pushed.
