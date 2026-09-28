@@ -23,7 +23,7 @@ export default async function SubscriptionsPage() {
           <thead>
             <tr>
               <th className={th}>Tên</th>
-              <th className={th}>Giá / tháng</th>
+              <th className={th}>Giá</th>
               <th className={th}>Nhận tiền</th>
               <th className={th}>Nhắc trước</th>
             </tr>
@@ -34,7 +34,10 @@ export default async function SubscriptionsPage() {
                 <td className={td}>
                   <Link href={`/admin/subscriptions/${s.id}`} className="font-medium text-blue-700 hover:underline">{s.name}</Link>
                 </td>
-                <td className={td}><Money amount={s.pricePerMonth} currency={s.currency as Currency} fx={fx} /></td>
+                <td className={td}>
+                  <Money amount={s.billingAmount} currency={s.currency as Currency} fx={fx} />
+                  <span className="text-gray-500"> /{s.billingCycle === 'yearly' ? 'năm' : 'tháng'}</span>
+                </td>
                 <td className={td}>{s.accountLabel}</td>
                 <td className={td}>{s.remindDaysBefore ?? DEFAULT_REMIND_DAYS_BEFORE} ngày</td>
               </tr>

@@ -62,12 +62,25 @@ describe('paymentAccountSchema', () => {
 });
 
 describe('subscriptionSchema', () => {
-  const valid = { name: 'Youtube', currency: 'JPY', pricePerMonth: '300', paymentAccountId: '1', remindDaysBefore: '' };
+  const valid = { name: 'Youtube', currency: 'JPY', billingCycle: 'monthly', billingAmount: '300', paymentAccountId: '1', remindDaysBefore: '' };
 
-  it('coerces numbers and maps empty lead time to null', () => {
+  it('coerces numbers, maps empty lead time to null, and pricePerMonth = billingAmount for monthly', () => {
     expect(parseForm(subscriptionSchema, fd(valid))).toEqual({
-      data: { name: 'Youtube', currency: 'JPY', pricePerMonth: 300, paymentAccountId: 1, remindDaysBefore: null },
+      data: {
+        name: 'Youtube',
+        currency: 'JPY',
+        billingCycle: 'monthly',
+        billingAmount: 300,
+        paymentAccountId: 1,
+        remindDaysBefore: null,
+        pricePerMonth: 300,
+      },
     });
+  });
+
+  it('derives pricePerMonth by dividing (rounded) for yearly billing', () => {
+    const r = parseForm(subscriptionSchema, fd({ ...valid, billingCycle: 'yearly', billingAmount: '1000000' }));
+    expect(r).toMatchObject({ data: { billingCycle: 'yearly', billingAmount: 1_000_000, pricePerMonth: 83_333 } });
   });
 
   it('keeps an explicit lead time including 0', () => {
@@ -75,9 +88,13 @@ describe('subscriptionSchema', () => {
     expect(r).toMatchObject({ data: { remindDaysBefore: 0 } });
   });
 
-  it('rejects non-positive price, fractional price and out-of-range lead time', () => {
-    expect('error' in parseForm(subscriptionSchema, fd({ ...valid, pricePerMonth: '0' }))).toBe(true);
-    expect('error' in parseForm(subscriptionSchema, fd({ ...valid, pricePerMonth: '10.5' }))).toBe(true);
+  it('rejects an unknown billing cycle', () => {
+    expect(parseForm(subscriptionSchema, fd({ ...valid, billingCycle: 'weekly' }))).toEqual({ error: 'Chọn chu kỳ trả tiền' });
+  });
+
+  it('rejects non-positive amount, fractional amount and out-of-range lead time', () => {
+    expect('error' in parseForm(subscriptionSchema, fd({ ...valid, billingAmount: '0' }))).toBe(true);
+    expect('error' in parseForm(subscriptionSchema, fd({ ...valid, billingAmount: '10.5' }))).toBe(true);
     expect('error' in parseForm(subscriptionSchema, fd({ ...valid, remindDaysBefore: '-1' }))).toBe(true);
     expect('error' in parseForm(subscriptionSchema, fd({ ...valid, remindDaysBefore: '61' }))).toBe(true);
   });

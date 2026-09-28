@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CURRENCIES } from '@/lib/db-schema';
 import { isValidDate } from '@/lib/format/date';
+import { yearlyToMonthly } from '@/lib/format/money';
 import { MAX_MONTHS_PER_PAYMENT } from '@/lib/payments/service';
 
 // Form schemas. Input comes from FormData, so numbers arrive as strings.
@@ -41,17 +42,27 @@ export const paymentAccountSchema = z
     qrImagePath: data.currency === 'VND' ? data.qrImagePath : null,
   }));
 
-export const subscriptionSchema = z.object({
-  name: z.string().trim().min(1, 'Nhập tên subscription').max(100),
-  currency,
-  pricePerMonth: money('Giá mỗi tháng không hợp lệ').positive('Giá mỗi tháng phải lớn hơn 0'),
-  paymentAccountId: id('Chọn tài khoản nhận tiền'),
-  // Empty input means "use the default lead time".
-  remindDaysBefore: z.preprocess(
-    (v) => (v === '' || v == null ? null : v),
-    z.coerce.number({ invalid_type_error: 'Số ngày nhắc không hợp lệ' }).int('Số ngày nhắc không hợp lệ').min(0, 'Số ngày nhắc không hợp lệ').max(60, 'Tối đa 60 ngày').nullable(),
-  ),
-});
+// The admin enters one amount in whichever cycle they picked; pricePerMonth is derived so
+// every existing reader of "the monthly price" (list page, etc.) keeps working unchanged.
+const billingCycle = z.enum(['monthly', 'yearly'], { errorMap: () => ({ message: 'Chọn chu kỳ trả tiền' }) });
+
+export const subscriptionSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Nhập tên subscription').max(100),
+    currency,
+    billingCycle,
+    billingAmount: money('Số tiền không hợp lệ').positive('Số tiền phải lớn hơn 0'),
+    paymentAccountId: id('Chọn tài khoản nhận tiền'),
+    // Empty input means "use the default lead time".
+    remindDaysBefore: z.preprocess(
+      (v) => (v === '' || v == null ? null : v),
+      z.coerce.number({ invalid_type_error: 'Số ngày nhắc không hợp lệ' }).int('Số ngày nhắc không hợp lệ').min(0, 'Số ngày nhắc không hợp lệ').max(60, 'Tối đa 60 ngày').nullable(),
+    ),
+  })
+  .transform((data) => ({
+    ...data,
+    pricePerMonth: data.billingCycle === 'monthly' ? data.billingAmount : yearlyToMonthly(data.billingAmount),
+  }));
 
 export const memberSchema = z.object({
   name: z.string().trim().min(1, 'Nhập tên thành viên').max(100),

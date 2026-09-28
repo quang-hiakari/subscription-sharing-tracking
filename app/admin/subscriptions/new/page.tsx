@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ActionForm } from '@/components/action-form';
-import { EmptyState, PageHeader } from '@/components/ui/page-parts';
+import { Card, EmptyState, PageHeader } from '@/components/ui/page-parts';
 import { requireAdmin } from '@/lib/auth/require-role';
 import { listAccounts } from '@/lib/queries/admin';
 import { createSubscription } from '../actions';
@@ -21,11 +21,13 @@ export default async function NewSubscriptionPage() {
   }
 
   return (
-    <div className="max-w-md">
+    <div className="max-w-3xl">
       <PageHeader title="Thêm subscription" />
-      <ActionForm action={createSubscription} submitLabel="Lưu">
-        <SubscriptionFields accounts={accounts} />
-      </ActionForm>
+      <Card>
+        <ActionForm action={createSubscription} submitLabel="Lưu">
+          <SubscriptionFields accounts={accounts} />
+        </ActionForm>
+      </Card>
     </div>
   );
 }

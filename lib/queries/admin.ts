@@ -20,6 +20,8 @@ export async function listSubscriptions() {
       id: subscriptions.id,
       name: subscriptions.name,
       currency: subscriptions.currency,
+      billingCycle: subscriptions.billingCycle,
+      billingAmount: subscriptions.billingAmount,
       pricePerMonth: subscriptions.pricePerMonth,
       remindDaysBefore: subscriptions.remindDaysBefore,
       accountLabel: paymentAccounts.label,

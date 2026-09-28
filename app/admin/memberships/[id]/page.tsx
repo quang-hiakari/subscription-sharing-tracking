@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { ActionForm } from '@/components/action-form';
 import { PaymentFields } from '@/components/payment-fields';
 import { PaymentHistory } from '@/components/payment-history';
-import { PageHeader } from '@/components/ui/page-parts';
+import { Card, PageHeader } from '@/components/ui/page-parts';
 import { requireAdmin } from '@/lib/auth/require-role';
 import type { Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
@@ -31,73 +31,78 @@ export default async function EditMembershipPage({ params }: { params: Promise<{
   const reminders = await listRemindersForMembership(id);
   const fx = await getFx();
   const currency = membership.currency as Currency;
+  const canPay = !membership.isFamily && !membership.archived;
 
   return (
-    <div className="max-w-2xl space-y-8">
-      <div className="max-w-md">
-        <PageHeader title={`${membership.memberName} · ${membership.subscriptionName}`} />
-        <ActionForm action={updateMembership.bind(null, id)} submitLabel="Lưu">
-          <MembershipTermsFields defaults={membership} />
-        </ActionForm>
+    <div className="max-w-5xl space-y-6">
+      <PageHeader title={`${membership.memberName} · ${membership.subscriptionName}`} />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="Thông tin">
+          <ActionForm action={updateMembership.bind(null, id)} submitLabel="Lưu">
+            <MembershipTermsFields defaults={membership} />
+          </ActionForm>
+        </Card>
+
+        {canPay && (
+          <Card>
+            <div>
+              <h2 className="mb-3 font-medium">Ghi nhận thanh toán đã nhận</h2>
+              <ActionForm action={recordMembershipPayment.bind(null, id)} submitLabel="Ghi nhận">
+                <PaymentFields monthlyShare={membership.monthlyShare} currencyLabel={currency} />
+              </ActionForm>
+            </div>
+
+            <div className="mt-6 space-y-3 border-t border-gray-200 pt-4">
+              <h2 className="font-medium">Nhắc thanh toán</h2>
+              <ActionForm
+                action={sendReminderNow.bind(null, id)}
+                submitLabel="Gửi nhắc ngay"
+                variant="secondary"
+                confirmMessage={`Gửi email nhắc tới ${membership.memberEmail}?`}
+              />
+              {reminders.length > 0 && (
+                <ul className="text-sm text-gray-600">
+                  {reminders.map((r) => (
+                    <li key={r.id}>
+                      {todayJst(r.sentAt)} · {reminderLabel(r.kind)} · hạn {r.dueDate}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Card>
+        )}
       </div>
 
-      {!membership.isFamily && !membership.archived && (
-        <div className="max-w-md border-t border-gray-200 pt-4">
-          <h2 className="mb-3 font-medium">Ghi nhận thanh toán đã nhận</h2>
-          <ActionForm action={recordMembershipPayment.bind(null, id)} submitLabel="Ghi nhận">
-            <PaymentFields monthlyShare={membership.monthlyShare} currencyLabel={currency} />
-          </ActionForm>
-        </div>
-      )}
+      <Card title="Lịch sử thanh toán">
+        <PaymentHistory rows={history} currency={currency} fx={fx} />
+      </Card>
 
-      {!membership.isFamily && !membership.archived && (
-        <div className="max-w-md space-y-3 border-t border-gray-200 pt-4">
-          <h2 className="font-medium">Nhắc thanh toán</h2>
-          <ActionForm
-            action={sendReminderNow.bind(null, id)}
-            submitLabel="Gửi nhắc ngay"
-            variant="secondary"
-            confirmMessage={`Gửi email nhắc tới ${membership.memberEmail}?`}
-          />
-          {reminders.length > 0 && (
-            <ul className="text-sm text-gray-600">
-              {reminders.map((r) => (
-                <li key={r.id}>
-                  {todayJst(r.sentAt)} · {reminderLabel(r.kind)} · hạn {r.dueDate}
-                </li>
-              ))}
-            </ul>
+      <Card>
+        <div className="flex flex-wrap gap-3">
+          {membership.archived ? (
+            <ActionForm action={setMembershipArchived.bind(null, id, false)} submitLabel="Bỏ ẩn" variant="secondary" />
+          ) : (
+            <ActionForm
+              action={setMembershipArchived.bind(null, id, true)}
+              submitLabel="Ẩn khỏi subscription"
+              variant="secondary"
+              confirmMessage="Ẩn mục này? Sẽ không còn nhắc và không hiện cho thành viên."
+            />
+          )}
+          {hasPayments ? (
+            <p className="self-center text-xs text-gray-500">Đã có lịch sử thanh toán nên không xoá được, chỉ ẩn.</p>
+          ) : (
+            <ActionForm
+              action={deleteMembership.bind(null, id)}
+              submitLabel="Xoá"
+              variant="danger"
+              confirmMessage="Xoá mục này?"
+            />
           )}
         </div>
-      )}
-
-      <div className="border-t border-gray-200 pt-4">
-        <h2 className="mb-3 font-medium">Lịch sử thanh toán</h2>
-        <PaymentHistory rows={history} currency={currency} fx={fx} />
-      </div>
-
-      <div className="max-w-md space-y-3 border-t border-gray-200 pt-4">
-        {membership.archived ? (
-          <ActionForm action={setMembershipArchived.bind(null, id, false)} submitLabel="Bỏ ẩn" variant="secondary" />
-        ) : (
-          <ActionForm
-            action={setMembershipArchived.bind(null, id, true)}
-            submitLabel="Ẩn khỏi subscription"
-            variant="secondary"
-            confirmMessage="Ẩn mục này? Sẽ không còn nhắc và không hiện cho thành viên."
-          />
-        )}
-        {hasPayments ? (
-          <p className="text-xs text-gray-500">Đã có lịch sử thanh toán nên không xoá được, chỉ ẩn.</p>
-        ) : (
-          <ActionForm
-            action={deleteMembership.bind(null, id)}
-            submitLabel="Xoá"
-            variant="danger"
-            confirmMessage="Xoá mục này?"
-          />
-        )}
-      </div>
+      </Card>
     </div>
   );
 }

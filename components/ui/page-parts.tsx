@@ -28,6 +28,17 @@ export function EmptyState({ children }: { children: React.ReactNode }) {
   return <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">{children}</p>;
 }
 
+/** A bordered panel for one logical block of a page (a form, a danger-zone action). Lets pages
+ * place independent blocks side by side instead of stacking everything in one narrow column. */
+export function Card({ title, children }: { title?: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-5">
+      {title && <h2 className="mb-3 font-medium">{title}</h2>}
+      {children}
+    </div>
+  );
+}
+
 /** Scrollable table wrapper so wide tables work on phones. */
 export function TableWrap({ children }: { children: React.ReactNode }) {
   return (

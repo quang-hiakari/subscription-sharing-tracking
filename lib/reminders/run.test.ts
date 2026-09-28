@@ -34,8 +34,8 @@ beforeEach(() => {
   raw.exec(`
     INSERT INTO payment_accounts (currency, label, bank_name, branch_name, account_number, account_holder_name)
       VALUES ('JPY', 'Yucho', 'Yucho Bank', 'Main', '1234567', 'NGUYEN A');
-    INSERT INTO subscriptions (name, currency, price_per_month, payment_account_id, remind_days_before) VALUES
-      ('Youtube', 'JPY', 1200, 1, NULL), ('M365', 'JPY', 900, 1, 14);
+    INSERT INTO subscriptions (name, currency, billing_amount, price_per_month, payment_account_id, remind_days_before) VALUES
+      ('Youtube', 'JPY', 1200, 1200, 1, NULL), ('M365', 'JPY', 900, 900, 1, 14);
     INSERT INTO members (name, email) VALUES
       ('An', 'an@x.com'), ('Binh', 'binh@x.com'), ('Chi', 'chi@x.com'), ('Dung', 'dung@x.com'), ('Em', 'em@x.com');
   `);

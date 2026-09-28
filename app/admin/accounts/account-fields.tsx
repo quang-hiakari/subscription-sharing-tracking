@@ -22,20 +22,26 @@ export function AccountFields({ defaults = {} }: { defaults?: Defaults }) {
 
   return (
     <>
-      <SelectField
-        label="Loại tiền"
-        name="currency"
-        options={CURRENCY_OPTIONS}
-        value={currency}
-        onChange={(e) => setCurrency(e.target.value as Currency)}
-      />
-      <Field label="Tên tài khoản (nội bộ)" name="label" required maxLength={100} defaultValue={defaults.label} placeholder="Yucho cá nhân, VCB..." hint="Chỉ để bạn phân biệt các tài khoản, không hiện cho thành viên." />
-      <Field label="Tên ngân hàng" name="bankName" required maxLength={100} defaultValue={defaults.bankName} />
-      {currency === 'JPY' && (
-        <Field label="Tên chi nhánh (支店名)" name="branchName" required maxLength={100} defaultValue={defaults.branchName ?? ''} />
-      )}
-      <Field label="Số tài khoản" name="accountNumber" required maxLength={50} defaultValue={defaults.accountNumber} />
-      <Field label="Tên chủ tài khoản" name="accountHolderName" required maxLength={100} defaultValue={defaults.accountHolderName} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <SelectField
+          label="Loại tiền"
+          name="currency"
+          options={CURRENCY_OPTIONS}
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value as Currency)}
+        />
+        <Field label="Tên tài khoản (nội bộ)" name="label" required maxLength={100} defaultValue={defaults.label} placeholder="Yucho cá nhân, VCB..." hint="Chỉ để bạn phân biệt các tài khoản, không hiện cho thành viên." />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Tên ngân hàng" name="bankName" required maxLength={100} defaultValue={defaults.bankName} />
+        {currency === 'JPY' && (
+          <Field label="Tên chi nhánh (支店名)" name="branchName" required maxLength={100} defaultValue={defaults.branchName ?? ''} />
+        )}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Số tài khoản" name="accountNumber" required maxLength={50} defaultValue={defaults.accountNumber} />
+        <Field label="Tên chủ tài khoản" name="accountHolderName" required maxLength={100} defaultValue={defaults.accountHolderName} />
+      </div>
       {currency === 'VND' && (
         <div className="space-y-2">
           <Field

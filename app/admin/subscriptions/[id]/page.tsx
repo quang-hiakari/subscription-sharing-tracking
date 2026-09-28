@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { ActionForm } from '@/components/action-form';
 import { FxNote, Money } from '@/components/money';
 import { StatusBadge } from '@/components/status-badge';
-import { Badge, EmptyState, PageHeader, TableWrap, td, th } from '@/components/ui/page-parts';
+import { Badge, Card, EmptyState, PageHeader, TableWrap, td, th } from '@/components/ui/page-parts';
 import { requireAdmin } from '@/lib/auth/require-role';
 import type { Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
@@ -40,15 +40,24 @@ export default async function EditSubscriptionPage({
   const today = todayJst();
 
   return (
-    <div className="max-w-2xl space-y-8">
-      <div className="max-w-md">
-        <PageHeader title={`Sửa subscription: ${subscription.name}`} />
-        <ActionForm action={updateSubscription.bind(null, id)} submitLabel="Lưu">
-          <SubscriptionFields accounts={accounts} defaults={subscription} />
-        </ActionForm>
+    <div className="max-w-5xl space-y-6">
+      <PageHeader title={`Sửa subscription: ${subscription.name}`} />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="Thông tin subscription">
+          <ActionForm action={updateSubscription.bind(null, id)} submitLabel="Lưu">
+            <SubscriptionFields accounts={accounts} defaults={subscription} />
+          </ActionForm>
+        </Card>
+
+        <Card title="Thêm thành viên">
+          <ActionForm action={addMemberToSubscription.bind(null, id)} submitLabel="Thêm thành viên">
+            <AddMemberForm availableMembers={availableMembers} paidThrough={today} />
+          </ActionForm>
+        </Card>
       </div>
 
-      <div className="border-t border-gray-200 pt-4">
+      <Card>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="font-medium">Thành viên</h2>
           {showArchived ? (
@@ -87,24 +96,19 @@ export default async function EditSubscriptionPage({
             </tbody>
           </TableWrap>
         )}
-        <FxNote fx={fx} />
-      </div>
+        <div className="mt-3">
+          <FxNote fx={fx} />
+        </div>
+      </Card>
 
-      <div className="max-w-md border-t border-gray-200 pt-4">
-        <h2 className="mb-3 font-medium">Thêm thành viên</h2>
-        <ActionForm action={addMemberToSubscription.bind(null, id)} submitLabel="Thêm thành viên">
-          <AddMemberForm availableMembers={availableMembers} paidThrough={today} />
-        </ActionForm>
-      </div>
-
-      <div className="border-t border-gray-200 pt-4">
+      <Card>
         <ActionForm
           action={deleteSubscription.bind(null, id)}
           submitLabel="Xoá subscription"
           variant="danger"
           confirmMessage="Xoá subscription này?"
         />
-      </div>
+      </Card>
     </div>
   );
 }

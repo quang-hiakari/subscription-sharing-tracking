@@ -58,6 +58,12 @@ export const subscriptions = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     name: text('name').notNull(),
     currency: text('currency').notNull(),
+    // How the admin entered the price: 'monthly' -> billingAmount is the monthly total;
+    // 'yearly' -> billingAmount is the yearly total. pricePerMonth is always kept in sync
+    // (derived server-side, rounded for yearly) so every existing reader of "the monthly
+    // price" keeps working unchanged.
+    billingCycle: text('billing_cycle').notNull().default('monthly'),
+    billingAmount: integer('billing_amount').notNull(),
     pricePerMonth: integer('price_per_month').notNull(),
     paymentAccountId: integer('payment_account_id')
       .notNull()
@@ -67,6 +73,8 @@ export const subscriptions = sqliteTable(
   },
   (t) => [
     check('subscriptions_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`),
+    check('subscriptions_billing_cycle_check', sql`${t.billingCycle} IN ('monthly', 'yearly')`),
+    check('subscriptions_billing_amount_check', sql`${t.billingAmount} > 0`),
     check('subscriptions_price_check', sql`${t.pricePerMonth} > 0`),
     check('subscriptions_remind_check', sql`${t.remindDaysBefore} IS NULL OR ${t.remindDaysBefore} >= 0`),
   ],
