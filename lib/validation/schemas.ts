@@ -76,6 +76,17 @@ export const membershipUpdateSchema = membershipCreateSchema.pick({
   paidThrough: true,
 });
 
+// Adding a member to a subscription: either an existing member (by id) or a brand-new one
+// (name + email), plus the same terms as membershipUpdateSchema either way.
+export const addMemberToSubscriptionSchema = z.discriminatedUnion('mode', [
+  membershipUpdateSchema.extend({ mode: z.literal('existing'), memberId: id('Chọn thành viên') }),
+  membershipUpdateSchema.extend({
+    mode: z.literal('new'),
+    name: z.string().trim().min(1, 'Nhập tên thành viên').max(100),
+    email: z.string().trim().toLowerCase().email('Email không hợp lệ'),
+  }),
+]);
+
 export type ParseResult<T> = { data: T } | { error: string };
 
 /** Parses FormData with a schema; returns the first user-facing error message. */

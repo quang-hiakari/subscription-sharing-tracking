@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addMemberToSubscriptionSchema,
   memberSchema,
   membershipCreateSchema,
   membershipUpdateSchema,
@@ -151,5 +152,33 @@ describe('membershipSchema', () => {
   it('update schema ignores member/subscription ids', () => {
     const r = parseForm(membershipUpdateSchema, fd({ ...valid, memberId: '999' }));
     expect(r).toEqual({ data: { monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01' } });
+  });
+});
+
+describe('addMemberToSubscriptionSchema', () => {
+  const terms = { monthlyShare: '300', paidThrough: '2026-10-01' };
+
+  it('parses the existing-member branch', () => {
+    expect(parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'existing', memberId: '5' }))).toEqual({
+      data: { mode: 'existing', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01', memberId: 5 },
+    });
+  });
+
+  it('parses the new-member branch and normalizes the email', () => {
+    expect(
+      parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'new', name: '  An ', email: ' An@Example.COM ' })),
+    ).toEqual({
+      data: { mode: 'new', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01', name: 'An', email: 'an@example.com' },
+    });
+  });
+
+  it('requires memberId for existing and name/email for new', () => {
+    expect('error' in parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'existing', memberId: '' }))).toBe(true);
+    expect('error' in parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'new', name: '', email: 'an@x.com' }))).toBe(true);
+    expect('error' in parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'new', name: 'An', email: 'not-an-email' }))).toBe(true);
+  });
+
+  it('rejects an unknown mode', () => {
+    expect('error' in parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'bogus' }))).toBe(true);
   });
 });

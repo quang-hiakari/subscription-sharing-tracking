@@ -4,9 +4,8 @@ export const runtime = 'edge';
 
 const NAV = [
   { href: '/admin', label: 'Tổng quan' },
-  { href: '/admin/payments', label: 'Thanh toán' },
-  { href: '/admin/memberships', label: 'Thành viên trong sub' },
   { href: '/admin/subscriptions', label: 'Subscription' },
+  { href: '/admin/payments', label: 'Thanh toán' },
   { href: '/admin/members', label: 'Người dùng' },
   { href: '/admin/accounts', label: 'Tài khoản nhận tiền' },
 ];

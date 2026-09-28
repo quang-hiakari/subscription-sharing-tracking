@@ -46,9 +46,12 @@ export async function getMember(id: number) {
 /**
  * Memberships joined with member and subscription. By default archived memberships and
  * memberships of archived members are excluded; this is the same "active" rule the
- * dashboard and reminders rely on.
+ * dashboard and reminders rely on. Pass `subscriptionId` to scope to one subscription
+ * (used by the subscription detail page).
  */
-export async function listMemberships(includeArchived = false) {
+export async function listMemberships(includeArchived = false, subscriptionId?: number) {
+  const activeFilter = includeArchived ? undefined : and(eq(memberships.archived, false), eq(members.archived, false));
+  const scopeFilter = subscriptionId === undefined ? undefined : eq(memberships.subscriptionId, subscriptionId);
   return getDrizzle()
     .select({
       id: memberships.id,
@@ -68,7 +71,7 @@ export async function listMemberships(includeArchived = false) {
     .from(memberships)
     .innerJoin(members, eq(memberships.memberId, members.id))
     .innerJoin(subscriptions, eq(memberships.subscriptionId, subscriptions.id))
-    .where(includeArchived ? undefined : and(eq(memberships.archived, false), eq(members.archived, false)))
+    .where(and(activeFilter, scopeFilter))
     .orderBy(subscriptions.name, members.name);
 }
 
@@ -78,6 +81,7 @@ export async function getMembership(id: number) {
       id: memberships.id,
       memberName: members.name,
       memberEmail: members.email,
+      subscriptionId: subscriptions.id,
       subscriptionName: subscriptions.name,
       currency: subscriptions.currency,
       monthlyShare: memberships.monthlyShare,
@@ -90,6 +94,14 @@ export async function getMembership(id: number) {
     .innerJoin(subscriptions, eq(memberships.subscriptionId, subscriptions.id))
     .where(eq(memberships.id, id));
   return row ?? null;
+}
+
+/** Active members not already in this subscription (any status, since re-adding an archived one is blocked). */
+export async function listAvailableMembersForSubscription(subscriptionId: number) {
+  const taken = await getDrizzle().select({ memberId: memberships.memberId }).from(memberships).where(eq(memberships.subscriptionId, subscriptionId));
+  const takenIds = new Set(taken.map((t) => t.memberId));
+  const all = await listMembers();
+  return all.filter((m) => !m.archived && !takenIds.has(m.id));
 }
 
 /** Non-family active memberships that are overdue or due within their lead time, most urgent first. */
