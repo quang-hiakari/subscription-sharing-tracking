@@ -1,4 +1,5 @@
 import { CheckboxField, Field } from '@/components/ui/fields';
+import type { BillingCycle } from '@/lib/db-schema';
 
 interface Defaults {
   monthlyShare?: number;
@@ -6,13 +7,21 @@ interface Defaults {
   paidThrough?: string;
 }
 
-/** Terms shared by the create and edit forms. */
-export function MembershipTermsFields({ defaults = {} }: { defaults?: Defaults }) {
+/** Terms shared by the create and edit forms. The share amount follows the subscription's own
+ * billing cycle (a yearly subscription's share is a yearly amount, not a monthly one). */
+export function MembershipTermsFields({
+  defaults = {},
+  billingCycle = 'monthly',
+}: {
+  defaults?: Defaults;
+  billingCycle?: BillingCycle;
+}) {
+  const cycleWord = billingCycle === 'yearly' ? 'năm' : 'tháng';
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Số tiền mỗi tháng của người này"
+          label={`Số tiền mỗi ${cycleWord} của người này`}
           name="monthlyShare"
           type="number"
           inputMode="numeric"

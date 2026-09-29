@@ -1,5 +1,5 @@
 import { Badge, TableWrap, td, th } from '@/components/ui/page-parts';
-import type { Currency } from '@/lib/db-schema';
+import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
 import { Money } from '@/components/money';
 import type { FxRate } from '@/lib/fx/rates';
@@ -21,14 +21,25 @@ export function PaymentStatusBadge({ status }: { status: string }) {
 }
 
 /** Dates are shown as JST calendar days, matching due dates. */
-export function PaymentHistory({ rows, currency, fx }: { rows: HistoryRow[]; currency: Currency; fx: FxRate | null }) {
+export function PaymentHistory({
+  rows,
+  currency,
+  fx,
+  billingCycle = 'monthly',
+}: {
+  rows: HistoryRow[];
+  currency: Currency;
+  fx: FxRate | null;
+  billingCycle?: BillingCycle;
+}) {
   if (rows.length === 0) return <p className="text-sm text-gray-500">Chưa có thanh toán nào.</p>;
+  const cycleWord = billingCycle === 'yearly' ? 'năm' : 'tháng';
   return (
     <TableWrap>
       <thead>
         <tr>
           <th className={th}>Ngày báo</th>
-          <th className={th}>Số tháng</th>
+          <th className={th}>Số {cycleWord}</th>
           <th className={th}>Số tiền</th>
           <th className={th}>Trạng thái</th>
           <th className={th}>Ghi chú</th>

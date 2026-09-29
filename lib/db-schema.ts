@@ -10,6 +10,9 @@ import { check, index, integer, primaryKey, real, sqliteTable, text, uniqueIndex
 export const CURRENCIES = ['JPY', 'VND'] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
+export const BILLING_CYCLES = ['monthly', 'yearly'] as const;
+export type BillingCycle = (typeof BILLING_CYCLES)[number];
+
 export const PAYMENT_STATUSES = ['pending', 'approved', 'rejected'] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
@@ -59,12 +62,13 @@ export const subscriptions = sqliteTable(
     name: text('name').notNull(),
     currency: text('currency').notNull(),
     // How the admin entered the price: 'monthly' -> billingAmount is the monthly total;
-    // 'yearly' -> billingAmount is the yearly total. pricePerMonth is always kept in sync
-    // (derived server-side, rounded for yearly) so every existing reader of "the monthly
-    // price" keeps working unchanged.
+    // 'yearly' -> billingAmount is the yearly total. Entered as-is, never converted; a
+    // "per month / per year, per person" reference is computed on read (see
+    // lib/format/subscription-reference.ts), never stored.
     billingCycle: text('billing_cycle').notNull().default('monthly'),
     billingAmount: integer('billing_amount').notNull(),
-    pricePerMonth: integer('price_per_month').notNull(),
+    // Max number of people sharing; used only for the reference calculation above.
+    slotCount: integer('slot_count').notNull().default(1),
     paymentAccountId: integer('payment_account_id')
       .notNull()
       .references(() => paymentAccounts.id),
@@ -73,9 +77,9 @@ export const subscriptions = sqliteTable(
   },
   (t) => [
     check('subscriptions_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`),
-    check('subscriptions_billing_cycle_check', sql`${t.billingCycle} IN ('monthly', 'yearly')`),
+    check('subscriptions_billing_cycle_check', sql`${t.billingCycle} IN (${inList(BILLING_CYCLES)})`),
     check('subscriptions_billing_amount_check', sql`${t.billingAmount} > 0`),
-    check('subscriptions_price_check', sql`${t.pricePerMonth} > 0`),
+    check('subscriptions_slot_count_check', sql`${t.slotCount} > 0`),
     check('subscriptions_remind_check', sql`${t.remindDaysBefore} IS NULL OR ${t.remindDaysBefore} >= 0`),
   ],
 );

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Field, SelectField } from '@/components/ui/fields';
 import { MembershipTermsFields } from '@/app/admin/memberships/membership-fields';
+import type { BillingCycle } from '@/lib/db-schema';
 
 interface AvailableMember {
   id: number;
@@ -11,7 +12,15 @@ interface AvailableMember {
 }
 
 /** Toggle between picking an existing member and creating a brand-new one; terms (share/family/date) are shared either way. */
-export function AddMemberForm({ availableMembers, paidThrough }: { availableMembers: AvailableMember[]; paidThrough: string }) {
+export function AddMemberForm({
+  availableMembers,
+  paidThrough,
+  billingCycle,
+}: {
+  availableMembers: AvailableMember[];
+  paidThrough: string;
+  billingCycle: BillingCycle;
+}) {
   const [mode, setMode] = useState<'existing' | 'new'>(availableMembers.length > 0 ? 'existing' : 'new');
 
   return (
@@ -44,7 +53,7 @@ export function AddMemberForm({ availableMembers, paidThrough }: { availableMemb
         </>
       )}
 
-      <MembershipTermsFields defaults={{ paidThrough }} />
+      <MembershipTermsFields defaults={{ paidThrough }} billingCycle={billingCycle} />
     </>
   );
 }

@@ -5,8 +5,9 @@ import { FxNote, Money } from '@/components/money';
 import { StatusBadge } from '@/components/status-badge';
 import { Badge, Card, EmptyState, PageHeader, TableWrap, td, th } from '@/components/ui/page-parts';
 import { requireAdmin } from '@/lib/auth/require-role';
-import type { Currency } from '@/lib/db-schema';
+import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
+import { computeSubscriptionReference } from '@/lib/format/subscription-reference';
 import { addMemberToSubscription } from '@/app/admin/memberships/actions';
 import { getSubscription, listAccounts, listAvailableMembersForSubscription, listMemberships } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
@@ -37,7 +38,10 @@ export default async function EditSubscriptionPage({
     getFx(),
   ]);
   const currency = subscription.currency as Currency;
+  const billingCycle = subscription.billingCycle as BillingCycle;
   const today = todayJst();
+  const cycleWord = billingCycle === 'yearly' ? 'năm' : 'tháng';
+  const reference = computeSubscriptionReference(subscription.billingAmount, billingCycle, subscription.slotCount);
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -48,11 +52,32 @@ export default async function EditSubscriptionPage({
           <ActionForm action={updateSubscription.bind(null, id)} submitLabel="Lưu">
             <SubscriptionFields accounts={accounts} defaults={subscription} />
           </ActionForm>
+          <div className="mt-4 grid grid-cols-2 gap-3 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+            <div>
+              <div className="text-gray-500">Tổng mỗi tháng</div>
+              <Money amount={reference.totalPerMonth} currency={currency} fx={fx} />
+            </div>
+            <div>
+              <div className="text-gray-500">Tổng mỗi năm</div>
+              <Money amount={reference.totalPerYear} currency={currency} fx={fx} />
+            </div>
+            <div>
+              <div className="text-gray-500">Mỗi người / tháng</div>
+              <Money amount={reference.perPersonPerMonth} currency={currency} fx={fx} />
+            </div>
+            <div>
+              <div className="text-gray-500">Mỗi người / năm</div>
+              <Money amount={reference.perPersonPerYear} currency={currency} fx={fx} />
+            </div>
+            <p className="col-span-2 text-xs text-gray-500">
+              Số tham khảo tính từ tổng tiền và số slot ({subscription.slotCount} người) — dùng để tự set số tiền khi thêm thành viên bên dưới.
+            </p>
+          </div>
         </Card>
 
         <Card title="Thêm thành viên">
           <ActionForm action={addMemberToSubscription.bind(null, id)} submitLabel="Thêm thành viên">
-            <AddMemberForm availableMembers={availableMembers} paidThrough={today} />
+            <AddMemberForm availableMembers={availableMembers} paidThrough={today} billingCycle={billingCycle} />
           </ActionForm>
         </Card>
       </div>
@@ -73,7 +98,7 @@ export default async function EditSubscriptionPage({
             <thead>
               <tr>
                 <th className={th}>Người</th>
-                <th className={th}>Mỗi tháng</th>
+                <th className={th}>Mỗi {cycleWord}</th>
                 <th className={th}>Đến hạn</th>
                 <th className={th}>Trạng thái</th>
               </tr>

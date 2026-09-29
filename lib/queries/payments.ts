@@ -54,6 +54,7 @@ export async function getMyMemberships(memberId: number) {
       id: memberships.id,
       subscriptionName: subscriptions.name,
       currency: subscriptions.currency,
+      billingCycle: subscriptions.billingCycle,
       monthlyShare: memberships.monthlyShare,
       isFamily: memberships.isFamily,
       paidThrough: memberships.paidThrough,

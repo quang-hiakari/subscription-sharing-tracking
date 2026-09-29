@@ -3,10 +3,10 @@ import { FxNote, Money } from '@/components/money';
 import { StatusBadge } from '@/components/status-badge';
 import { EmptyState, PageHeader, TableWrap, td, th } from '@/components/ui/page-parts';
 import { requireAdmin } from '@/lib/auth/require-role';
-import type { Currency } from '@/lib/db-schema';
+import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { sumByCurrency, totalInVnd } from '@/lib/fx/convert';
 import { todayJst } from '@/lib/format/date';
-import { formatMoney } from '@/lib/format/money';
+import { formatMoney, yearlyToMonthly } from '@/lib/format/money';
 import { countPendingPayments, listAttention, listMemberships } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
 
@@ -22,8 +22,14 @@ export default async function AdminDashboardPage() {
   ]);
 
   // What paying members owe per month in total (family members owe nothing).
+  // A yearly-cycle share is normalized to its monthly equivalent before summing.
   const monthly = sumByCurrency(
-    active.filter((m) => !m.isFamily).map((m) => ({ currency: m.currency as Currency, amount: m.monthlyShare })),
+    active
+      .filter((m) => !m.isFamily)
+      .map((m) => ({
+        currency: m.currency as Currency,
+        amount: (m.billingCycle as BillingCycle) === 'yearly' ? yearlyToMonthly(m.monthlyShare) : m.monthlyShare,
+      })),
   );
 
   return (
@@ -62,7 +68,7 @@ export default async function AdminDashboardPage() {
               <th className={th}>Người</th>
               <th className={th}>Subscription</th>
               <th className={th}>Đến hạn</th>
-              <th className={th}>Mỗi tháng</th>
+              <th className={th}>Số tiền mỗi kỳ</th>
               <th className={th}>Trạng thái</th>
             </tr>
           </thead>

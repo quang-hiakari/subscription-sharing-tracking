@@ -4,7 +4,7 @@ import { PaymentFields } from '@/components/payment-fields';
 import { PaymentHistory } from '@/components/payment-history';
 import { Card, PageHeader } from '@/components/ui/page-parts';
 import { requireAdmin } from '@/lib/auth/require-role';
-import type { Currency } from '@/lib/db-schema';
+import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
 import { countPaymentsForMembership, getMembership, listRemindersForMembership } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
@@ -31,6 +31,7 @@ export default async function EditMembershipPage({ params }: { params: Promise<{
   const reminders = await listRemindersForMembership(id);
   const fx = await getFx();
   const currency = membership.currency as Currency;
+  const billingCycle = membership.billingCycle as BillingCycle;
   const canPay = !membership.isFamily && !membership.archived;
 
   return (
@@ -40,7 +41,7 @@ export default async function EditMembershipPage({ params }: { params: Promise<{
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Thông tin">
           <ActionForm action={updateMembership.bind(null, id)} submitLabel="Lưu">
-            <MembershipTermsFields defaults={membership} />
+            <MembershipTermsFields defaults={membership} billingCycle={billingCycle} />
           </ActionForm>
         </Card>
 
@@ -49,7 +50,7 @@ export default async function EditMembershipPage({ params }: { params: Promise<{
             <div>
               <h2 className="mb-3 font-medium">Ghi nhận thanh toán đã nhận</h2>
               <ActionForm action={recordMembershipPayment.bind(null, id)} submitLabel="Ghi nhận">
-                <PaymentFields monthlyShare={membership.monthlyShare} currencyLabel={currency} />
+                <PaymentFields monthlyShare={membership.monthlyShare} currencyLabel={currency} billingCycle={billingCycle} />
               </ActionForm>
             </div>
 
@@ -76,7 +77,7 @@ export default async function EditMembershipPage({ params }: { params: Promise<{
       </div>
 
       <Card title="Lịch sử thanh toán">
-        <PaymentHistory rows={history} currency={currency} fx={fx} />
+        <PaymentHistory rows={history} currency={currency} fx={fx} billingCycle={billingCycle} />
       </Card>
 
       <Card>

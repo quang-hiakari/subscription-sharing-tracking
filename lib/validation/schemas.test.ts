@@ -62,25 +62,33 @@ describe('paymentAccountSchema', () => {
 });
 
 describe('subscriptionSchema', () => {
-  const valid = { name: 'Youtube', currency: 'JPY', billingCycle: 'monthly', billingAmount: '300', paymentAccountId: '1', remindDaysBefore: '' };
+  const valid = {
+    name: 'Youtube',
+    currency: 'JPY',
+    billingCycle: 'monthly',
+    billingAmount: '300',
+    slotCount: '4',
+    paymentAccountId: '1',
+    remindDaysBefore: '',
+  };
 
-  it('coerces numbers, maps empty lead time to null, and pricePerMonth = billingAmount for monthly', () => {
+  it('coerces numbers and maps empty lead time to null', () => {
     expect(parseForm(subscriptionSchema, fd(valid))).toEqual({
       data: {
         name: 'Youtube',
         currency: 'JPY',
         billingCycle: 'monthly',
         billingAmount: 300,
+        slotCount: 4,
         paymentAccountId: 1,
         remindDaysBefore: null,
-        pricePerMonth: 300,
       },
     });
   });
 
-  it('derives pricePerMonth by dividing (rounded) for yearly billing', () => {
+  it('accepts a yearly billing amount as-is (no monthly derivation)', () => {
     const r = parseForm(subscriptionSchema, fd({ ...valid, billingCycle: 'yearly', billingAmount: '1000000' }));
-    expect(r).toMatchObject({ data: { billingCycle: 'yearly', billingAmount: 1_000_000, pricePerMonth: 83_333 } });
+    expect(r).toMatchObject({ data: { billingCycle: 'yearly', billingAmount: 1_000_000 } });
   });
 
   it('keeps an explicit lead time including 0', () => {
@@ -97,6 +105,10 @@ describe('subscriptionSchema', () => {
     expect('error' in parseForm(subscriptionSchema, fd({ ...valid, billingAmount: '10.5' }))).toBe(true);
     expect('error' in parseForm(subscriptionSchema, fd({ ...valid, remindDaysBefore: '-1' }))).toBe(true);
     expect('error' in parseForm(subscriptionSchema, fd({ ...valid, remindDaysBefore: '61' }))).toBe(true);
+  });
+
+  it('rejects a non-positive slot count', () => {
+    expect('error' in parseForm(subscriptionSchema, fd({ ...valid, slotCount: '0' }))).toBe(true);
   });
 
   it('requires a payment account', () => {

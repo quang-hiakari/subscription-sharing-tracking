@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `payments_one_pending_uq` ON `payments` (`membership_id`) WHERE "payments"."status" = 'pending';

@@ -7,7 +7,7 @@ The owner shares YouTube and Microsoft 365 with several people and collects thei
 ## Requirements
 
 - **Roles.** Admin (full control) and member (read-only plus "I paid"). No open sign-up: only `ADMIN_EMAILS` and active members can sign in.
-- **Billing model.** Each subscription has one currency (JPY or VND) and a price per month. Each member has a monthly share. A payment covers 1-36 months, so the due date is a single `paid_through` date per membership that moves forward when a payment is approved.
+- **Billing model.** Each subscription has one currency (JPY or VND), a billing cycle (monthly or yearly) and a total amount for that cycle, plus a slot count used only to show reference numbers (per-person cost). Each member's own share is entered manually by the admin, in the subscription's own cycle unit. A payment covers 1-36 periods of that cycle, so the due date is a single `paid_through` date per membership that moves forward — by 1 month per period (monthly) or 12 months per period (yearly) — when a payment is approved.
 - **Payments.** A member reports a payment (months, optional amount, note) -> admin approves or rejects (reason required). Admin can also record money received directly.
 - **Reminders.** Email T-N days before the due date (N per subscription, default 7), on the due date, then every 3 overdue days, at most 5. Never for family members. Admin can send one now.
 - **Currency display.** Amounts show in their own currency plus a "≈" value in the other, from a daily rate. Display only; never used for billing.

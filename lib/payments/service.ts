@@ -21,23 +21,36 @@ interface MembershipRow {
   paid_through: string;
   archived: number;
   member_archived: number;
+  billing_cycle: 'monthly' | 'yearly';
 }
 
 async function loadMembership(db: D1Database, id: number): Promise<MembershipRow | null> {
   return db
     .prepare(
       `SELECT ms.id, ms.member_id, ms.monthly_share, ms.is_family, ms.paid_through, ms.archived,
-              m.archived AS member_archived
-       FROM memberships ms JOIN members m ON m.id = ms.member_id
+              m.archived AS member_archived, s.billing_cycle
+       FROM memberships ms
+       JOIN members m ON m.id = ms.member_id
+       JOIN subscriptions s ON s.id = ms.subscription_id
        WHERE ms.id = ?`,
     )
     .bind(id)
     .first<MembershipRow>();
 }
 
-/** Amount defaults to monthly share x months when the user leaves it empty. */
-function resolveAmount(row: MembershipRow, months: number, amount: number | null): number {
-  return amount ?? row.monthly_share * months;
+/** Amount defaults to share-per-cycle x periods when the user leaves it empty. */
+function resolveAmount(row: MembershipRow, periods: number, amount: number | null): number {
+  return amount ?? row.monthly_share * periods;
+}
+
+/**
+ * Calendar months to advance `paid_through` for N paid periods: a "period" is one of the
+ * subscription's own billing cycles, so a yearly subscription moves the date by 12 months
+ * per period paid. `addMonths` itself only ever deals in months — this is the one place a
+ * "period" is translated into "how many calendar months that period actually is".
+ */
+function periodsToMonths(periods: number, billingCycle: 'monthly' | 'yearly'): number {
+  return billingCycle === 'yearly' ? periods * 12 : periods;
 }
 
 export interface PaymentInput {
@@ -96,7 +109,7 @@ export async function approvePayment(db: D1Database, paymentId: number, now: Dat
   if (!membership) return fail('Không tìm thấy subscription của thanh toán này.');
 
   const oldDue = membership.paid_through;
-  const newDue = addMonths(oldDue, payment.months_covered);
+  const newDue = addMonths(oldDue, periodsToMonths(payment.months_covered, membership.billing_cycle));
   const decidedAt = now.getTime();
 
   // Statement 1 approves only while the payment is pending AND the due date is still what we read.
@@ -151,7 +164,7 @@ export async function recordPayment(db: D1Database, input: PaymentInput, now: Da
   if (amount <= 0) return fail('Số tiền phải lớn hơn 0.');
 
   const oldDue = row.paid_through;
-  const newDue = addMonths(oldDue, input.monthsCovered);
+  const newDue = addMonths(oldDue, periodsToMonths(input.monthsCovered, row.billing_cycle));
   const at = now.getTime();
 
   const [inserted] = await db.batch([

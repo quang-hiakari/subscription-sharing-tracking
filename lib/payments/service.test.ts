@@ -7,18 +7,21 @@ const NOW = new Date('2026-09-21T03:00:00Z');
 let db: D1Database;
 let raw: ReturnType<typeof createTestD1>['raw'];
 
-// Members 1 (An) and 2 (Binh); subscription 1 (share 300); memberships: 1 = An, 2 = Binh, 3 = An (family).
+// Members 1 (An) and 2 (Binh); subscriptions: 1 = Youtube (monthly), 2 = M365 (family only), 3 = Netflix (yearly).
+// Memberships: 1 = An/Youtube, 2 = Binh/Youtube, 3 = An/M365 (family), 4 = An/Netflix (yearly).
 beforeEach(() => {
   ({ db, raw } = createTestD1());
   raw.exec(`
     INSERT INTO payment_accounts (currency, label, bank_name, branch_name, account_number, account_holder_name)
       VALUES ('JPY', 'Yucho', 'Yucho Bank', 'Main', '123', 'NGUYEN A');
-    INSERT INTO subscriptions (name, currency, billing_amount, price_per_month, payment_account_id) VALUES ('Youtube', 'JPY', 1200, 1200, 1), ('M365', 'JPY', 900, 900, 1);
+    INSERT INTO subscriptions (name, currency, billing_amount, payment_account_id) VALUES ('Youtube', 'JPY', 1200, 1), ('M365', 'JPY', 900, 1);
+    INSERT INTO subscriptions (name, currency, billing_cycle, billing_amount, payment_account_id) VALUES ('Netflix', 'JPY', 'yearly', 12000, 1);
     INSERT INTO members (name, email) VALUES ('An', 'an@x.com'), ('Binh', 'binh@x.com');
     INSERT INTO memberships (member_id, subscription_id, monthly_share, is_family, paid_through) VALUES
       (1, 1, 300, 0, '2026-10-01'),
       (2, 1, 300, 0, '2026-09-01'),
-      (1, 2, 0, 1, '2026-09-01');
+      (1, 2, 0, 1, '2026-09-01'),
+      (1, 3, 12000, 0, '2026-10-01');
   `);
 });
 
@@ -134,6 +137,24 @@ describe('approvePayment', () => {
     expect((await approvePayment(db, 1, NOW)).ok).toBe(false);
     expect(await approvePayment(db, 999, NOW)).toEqual({ ok: false, error: 'Không tìm thấy thanh toán.' });
     expect(paidThrough(1)).toBe('2026-10-01');
+  });
+});
+
+describe('yearly billing cycle', () => {
+  it('approving one paid period on a yearly subscription moves the due date by 12 months', async () => {
+    await request(1, 4, { monthsCovered: 1 });
+    expect(await approvePayment(db, 1, NOW)).toEqual({ ok: true });
+    expect(paidThrough(4)).toBe('2027-10-01');
+  });
+
+  it('recording 2 paid periods on a yearly subscription moves the due date by 24 months', async () => {
+    expect(await recordPayment(db, { membershipId: 4, monthsCovered: 2, amount: null, note: null }, NOW)).toEqual({ ok: true });
+    expect(paidThrough(4)).toBe('2028-10-01');
+  });
+
+  it('defaults the amount to yearly share x periods, not monthly', async () => {
+    await request(1, 4, { monthsCovered: 1 });
+    expect(payment(1)).toMatchObject({ amount: 12000 });
   });
 });
 

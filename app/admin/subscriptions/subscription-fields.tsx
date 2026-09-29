@@ -12,6 +12,7 @@ interface Defaults {
   currency?: string;
   billingCycle?: string;
   billingAmount?: number;
+  slotCount?: number;
   paymentAccountId?: number;
   remindDaysBefore?: number | null;
 }
@@ -32,7 +33,7 @@ export function SubscriptionFields({
         <SelectField label="Loại tiền" name="currency" options={CURRENCY_OPTIONS} defaultValue={defaults.currency ?? 'JPY'} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <SelectField
           label="Chu kỳ trả tiền"
           name="billingCycle"
@@ -44,7 +45,7 @@ export function SubscriptionFields({
           onChange={(e) => setCycle(e.target.value as BillingCycle)}
         />
         <Field
-          label={cycle === 'monthly' ? 'Giá mỗi tháng (tổng)' : 'Giá mỗi năm (tổng)'}
+          label={cycle === 'monthly' ? 'Tổng tiền mỗi tháng' : 'Tổng tiền mỗi năm'}
           name="billingAmount"
           type="number"
           inputMode="numeric"
@@ -52,6 +53,17 @@ export function SubscriptionFields({
           step={1}
           required
           defaultValue={defaults.billingAmount}
+        />
+        <Field
+          label="Số slot chia sẻ"
+          name="slotCount"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          required
+          defaultValue={defaults.slotCount ?? 1}
+          hint="Để tính số tiền tham khảo mỗi người."
         />
       </div>
 

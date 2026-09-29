@@ -13,7 +13,7 @@ Both the Pages app and the Worker use the same D1 database. Migrations are appli
 | Table | Purpose |
 |---|---|
 | `payment_accounts` | Where to send money. Currency doubles as country: JPY (Japan) needs `branch_name`; VND (Vietnam) allows an optional QR image path (`qr_image_path`, e.g. `/qr/vcb.png` — a static file added to `public/qr/`, not uploaded). Both need `bank_name`, `account_number`, `account_holder_name`. |
-| `subscriptions` | Name, currency, price per month, account, optional `remind_days_before` |
+| `subscriptions` | Name, currency, `billing_cycle` (monthly/yearly) + `billing_amount` for that cycle, `slot_count` (max sharers, used only to derive reference numbers), account, optional `remind_days_before` |
 | `members` | Name, unique lowercase email, `archived` |
 | `memberships` | Member in a subscription: `monthly_share`, `is_family`, **`paid_through`** (next due date), `archived` |
 | `payments` | Reported or recorded payment: `months_covered`, `amount`, status `pending/approved/rejected`, note, reject reason |
@@ -27,7 +27,8 @@ Conventions: dates are `YYYY-MM-DD` text in JST; money is a whole integer (JPY a
 ## Key invariants
 
 - **Active rule.** A membership counts only when it and its member are both not archived. The dashboard, member view and reminders all use it.
-- **Due date.** It only moves when a payment is approved or recorded, by `months_covered` months (month-end clamped: Jan 31 + 1 = Feb 28). Approve/record is one D1 batch (a transaction) of guarded UPDATEs: the payment must still be pending and the due date must still be what was read. A double click, retry or concurrent edit cannot move it twice.
+- **Due date.** It only moves when a payment is approved or recorded, by `months_covered` *periods* of the membership's subscription's own `billing_cycle`: 1 month per period for monthly subscriptions, 12 months per period for yearly ones (`periodsToMonths()` in `lib/payments/service.ts`), then applied via `addMonths` (month-end clamped: Jan 31 + 1 = Feb 28). Approve/record is one D1 batch (a transaction) of guarded UPDATEs: the payment must still be pending and the due date must still be what was read. A double click, retry or concurrent edit cannot move it twice.
+- **Billing reference numbers.** A membership's `monthly_share` is admin-entered manually (in the subscription's own cycle unit) when adding a member — never auto-filled. `computeSubscriptionReference()` (`lib/format/subscription-reference.ts`) derives display-only per-month/per-year and per-person figures from `billing_amount` ÷ `slot_count`, shown as a guide on the subscription page; it is never stored.
 - **Access.** `getCurrentUser()` re-resolves role on every request from the session email: admin if in `ADMIN_EMAILS`, member if an active member row exists, otherwise no access (archiving a member ends their session's access at once). Every page and Server Action calls `requireAdmin()` or `requireMember()`; the admin layout is navigation only.
 - **Ownership.** A member's payment request is checked against the session's member id in the service, not trusted from the form.
 

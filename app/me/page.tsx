@@ -6,7 +6,7 @@ import { PaymentHistory, PaymentStatusBadge } from '@/components/payment-history
 import { StatusBadge } from '@/components/status-badge';
 import { EmptyState } from '@/components/ui/page-parts';
 import { requireMember } from '@/lib/auth/require-role';
-import type { Currency } from '@/lib/db-schema';
+import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
 import { getFx } from '@/lib/queries/fx';
 import { getMyMemberships } from '@/lib/queries/payments';
@@ -36,6 +36,8 @@ export default async function MePage() {
 
       {items.map((item) => {
         const currency = item.currency as Currency;
+        const billingCycle = item.billingCycle as BillingCycle;
+        const cycleWord = billingCycle === 'yearly' ? 'năm' : 'tháng';
         const { status, daysUntilDue } = membershipStatus(item, today);
         const pending = item.payments.find((p) => p.status === 'pending');
 
@@ -47,7 +49,7 @@ export default async function MePage() {
             </div>
 
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-              <dt className="text-gray-500">Mỗi tháng</dt>
+              <dt className="text-gray-500">Mỗi {cycleWord}</dt>
               <dd className="font-medium"><Money amount={item.monthlyShare} currency={currency} fx={fx} /></dd>
               {!item.isFamily && (
                 <>
@@ -77,14 +79,14 @@ export default async function MePage() {
               <p className="text-sm text-gray-500">Bạn là người nhà nên không cần thanh toán.</p>
             ) : pending ? (
               <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-                Bạn đã báo thanh toán {pending.monthsCovered} tháng (<Money amount={pending.amount} currency={currency} fx={fx} />) và đang chờ xác nhận. <PaymentStatusBadge status="pending" />
+                Bạn đã báo thanh toán {pending.monthsCovered} {cycleWord} (<Money amount={pending.amount} currency={currency} fx={fx} />) và đang chờ xác nhận. <PaymentStatusBadge status="pending" />
               </p>
             ) : (
               <details className="rounded-md border border-gray-200 p-3">
                 <summary className="cursor-pointer text-sm font-medium text-blue-700">Tôi đã chuyển tiền</summary>
                 <div className="mt-3">
                   <ActionForm action={requestPayment.bind(null, item.id)} submitLabel="Báo đã trả">
-                    <PaymentFields monthlyShare={item.monthlyShare} currencyLabel={currency} />
+                    <PaymentFields monthlyShare={item.monthlyShare} currencyLabel={currency} billingCycle={billingCycle} />
                   </ActionForm>
                 </div>
               </details>
@@ -92,7 +94,7 @@ export default async function MePage() {
 
             <div>
               <h3 className="mb-2 text-sm font-medium">Lịch sử thanh toán</h3>
-              <PaymentHistory rows={item.payments} currency={currency} fx={fx} />
+              <PaymentHistory rows={item.payments} currency={currency} fx={fx} billingCycle={billingCycle} />
             </div>
           </section>
         );

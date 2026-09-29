@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1789960233190,
+      "when": 1790642978482,
       "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1789960533047,
-      "tag": "0001_auth",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1789983435615,
-      "tag": "0002_payments-one-pending",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1790079111269,
-      "tag": "0003_payment-account-country-fields",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1790639044926,
-      "tag": "0004_subscription-billing-cycle",
       "breakpoints": true
     }
   ]
