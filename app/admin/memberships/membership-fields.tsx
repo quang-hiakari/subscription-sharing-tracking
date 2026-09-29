@@ -1,4 +1,5 @@
 import { CheckboxField, Field } from '@/components/ui/fields';
+import { MoneyField } from '@/components/ui/money-field';
 import type { BillingCycle } from '@/lib/db-schema';
 
 interface Defaults {
@@ -20,13 +21,9 @@ export function MembershipTermsFields({
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field
+        <MoneyField
           label={`Số tiền mỗi ${cycleWord} của người này`}
           name="monthlyShare"
-          type="number"
-          inputMode="numeric"
-          min={0}
-          step={1}
           required
           defaultValue={defaults.monthlyShare}
           hint="Theo loại tiền của subscription."

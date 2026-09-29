@@ -1,6 +1,6 @@
 // Plain form fields (native inputs). Server-component safe.
 
-const controlClass = 'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base';
+export const controlClass = 'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base';
 
 interface FieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name'> {
   label: string;

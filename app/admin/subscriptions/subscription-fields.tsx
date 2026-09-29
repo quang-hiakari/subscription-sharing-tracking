@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Field, SelectField } from '@/components/ui/fields';
+import { MoneyField } from '@/components/ui/money-field';
 import { CURRENCY_OPTIONS } from '@/lib/currency-options';
 import { DEFAULT_REMIND_DAYS_BEFORE } from '@/lib/reminders/constants';
 
@@ -44,13 +45,9 @@ export function SubscriptionFields({
           value={cycle}
           onChange={(e) => setCycle(e.target.value as BillingCycle)}
         />
-        <Field
+        <MoneyField
           label={cycle === 'monthly' ? 'Tổng tiền mỗi tháng' : 'Tổng tiền mỗi năm'}
           name="billingAmount"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          step={1}
           required
           defaultValue={defaults.billingAmount}
         />

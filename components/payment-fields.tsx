@@ -1,4 +1,5 @@
 import { Field } from '@/components/ui/fields';
+import { MoneyField } from '@/components/ui/money-field';
 import type { BillingCycle } from '@/lib/db-schema';
 import { MAX_MONTHS_PER_PAYMENT } from '@/lib/payments/service';
 
@@ -27,13 +28,9 @@ export function PaymentFields({
         required
         defaultValue={1}
       />
-      <Field
+      <MoneyField
         label="Số tiền (tuỳ chọn)"
         name="amount"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        step={1}
         hint={`Để trống = ${monthlyShare.toLocaleString('en-US')} ${currencyLabel} × số ${cycleWord}.`}
       />
       <Field label="Ghi chú (tuỳ chọn)" name="note" maxLength={200} />
