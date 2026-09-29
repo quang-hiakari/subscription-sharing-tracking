@@ -13,11 +13,12 @@ const LIST = '/admin/subscriptions';
 
 type SubscriptionInput = typeof subscriptions.$inferInsert;
 
-/** Returns an error message when the chosen account does not exist or has another currency. */
-async function accountProblem(input: Pick<SubscriptionInput, 'paymentAccountId' | 'currency'>): Promise<string | null> {
+/** Returns an error message when the chosen account does not exist. The account's own currency
+ * (which country-format bank fields it has) need not match the subscription's billing currency —
+ * e.g. a subscription billed in VND can pay into a JPY account; members see both via FX display. */
+async function accountProblem(input: Pick<SubscriptionInput, 'paymentAccountId'>): Promise<string | null> {
   const account = await getAccount(input.paymentAccountId);
   if (!account) return 'Tài khoản nhận tiền không tồn tại.';
-  if (account.currency !== input.currency) return 'Tài khoản nhận tiền phải cùng loại tiền với subscription.';
   return null;
 }
 

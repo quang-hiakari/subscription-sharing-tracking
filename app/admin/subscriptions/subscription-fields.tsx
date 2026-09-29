@@ -70,7 +70,7 @@ export function SubscriptionFields({
           name="paymentAccountId"
           options={accounts.map((a) => ({ value: a.id, label: `${a.label} (${a.currency})` }))}
           defaultValue={defaults.paymentAccountId}
-          hint="Phải cùng loại tiền với subscription."
+          hint="Không cần cùng loại tiền với subscription — thành viên vẫn thấy quy đổi (≈)."
         />
         <Field
           label="Nhắc trước hạn (ngày)"

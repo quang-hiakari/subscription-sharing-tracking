@@ -27,10 +27,6 @@ export async function updateAccount(id: number, _prev: FormState, formData: Form
 
   const existing = await getAccount(id);
   if (!existing) return { error: 'Không tìm thấy tài khoản.' };
-  // Subscriptions must keep the same currency as their account.
-  if (existing.currency !== parsed.data.currency && (await countSubscriptionsForAccount(id)) > 0) {
-    return { error: 'Không đổi được loại tiền khi đã có subscription dùng tài khoản này.' };
-  }
 
   await getDrizzle().update(paymentAccounts).set(parsed.data).where(eq(paymentAccounts.id, id));
   redirect(LIST);
