@@ -1,5 +1,5 @@
 import { ActionForm } from '@/components/action-form';
-import { FxNote, Money } from '@/components/money';
+import { Money } from '@/components/money';
 import { PaymentAccountDetails } from '@/components/payment-account-details';
 import { PaymentFields } from '@/components/payment-fields';
 import { PaymentHistory, PaymentStatusBadge } from '@/components/payment-history';
@@ -8,16 +8,17 @@ import { EmptyState } from '@/components/ui/page-parts';
 import { requireMember } from '@/lib/auth/require-role';
 import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
-import { getFx } from '@/lib/queries/fx';
 import { getMyMemberships } from '@/lib/queries/payments';
 import { membershipStatus } from '@/lib/queries/membership-status';
 import { requestPayment } from './actions';
 
 export const runtime = 'edge';
 
+// Members see exactly the amount the admin entered, in the subscription's own currency — no FX
+// "≈" conversion (that's an admin-only reference; the account may even be in another currency).
 export default async function MePage() {
   const user = await requireMember();
-  const [items, fx] = await Promise.all([getMyMemberships(user.memberId), getFx()]);
+  const items = await getMyMemberships(user.memberId);
   const today = todayJst();
 
   return (
@@ -50,7 +51,7 @@ export default async function MePage() {
 
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
               <dt className="text-gray-500">Mỗi {cycleWord}</dt>
-              <dd className="font-medium"><Money amount={item.monthlyShare} currency={currency} fx={fx} /></dd>
+              <dd className="font-medium"><Money amount={item.monthlyShare} currency={currency} fx={null} /></dd>
               {!item.isFamily && (
                 <>
                   <dt className="text-gray-500">Hạn tiếp theo</dt>
@@ -79,7 +80,7 @@ export default async function MePage() {
               <p className="text-sm text-gray-500">Bạn là người nhà nên không cần thanh toán.</p>
             ) : pending ? (
               <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-                Bạn đã báo thanh toán {pending.monthsCovered} {cycleWord} (<Money amount={pending.amount} currency={currency} fx={fx} />) và đang chờ xác nhận. <PaymentStatusBadge status="pending" />
+                Bạn đã báo thanh toán {pending.monthsCovered} {cycleWord} (<Money amount={pending.amount} currency={currency} fx={null} />) và đang chờ xác nhận. <PaymentStatusBadge status="pending" />
               </p>
             ) : (
               <details className="rounded-md border border-gray-200 p-3">
@@ -94,13 +95,11 @@ export default async function MePage() {
 
             <div>
               <h3 className="mb-2 text-sm font-medium">Lịch sử thanh toán</h3>
-              <PaymentHistory rows={item.payments} currency={currency} fx={fx} billingCycle={billingCycle} />
+              <PaymentHistory rows={item.payments} currency={currency} fx={null} billingCycle={billingCycle} />
             </div>
           </section>
         );
       })}
-
-      <FxNote fx={fx} />
     </main>
   );
 }
