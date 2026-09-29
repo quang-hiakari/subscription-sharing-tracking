@@ -33,8 +33,8 @@ describe('paymentAccountSchema', () => {
     });
   });
 
-  it('requires a branch for Japan but not for Vietnam', () => {
-    expect(parseForm(paymentAccountSchema, fd({ ...jp, branchName: '' }))).toEqual({ error: 'Nhập tên chi nhánh' });
+  it('allows no branch for Japan (e.g. PayPay) and for Vietnam', () => {
+    expect(parseForm(paymentAccountSchema, fd({ ...jp, branchName: '' }))).toMatchObject({ data: { branchName: null } });
     expect('data' in parseForm(paymentAccountSchema, fd(vn))).toBe(true);
   });
 

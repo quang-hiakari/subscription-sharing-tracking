@@ -20,7 +20,7 @@ export const paymentAccountSchema = z
     currency,
     label: z.string().trim().min(1, 'Nhập tên tài khoản').max(100),
     bankName: z.string().trim().min(1, 'Nhập tên ngân hàng').max(100),
-    // Required for JPY, absent for VND; enforced below since it depends on currency.
+    // Optional; some JPY methods (PayPay, other e-wallets) have no branch. Always absent for VND.
     branchName: z.preprocess(emptyToNull, z.string().trim().max(100).nullable()),
     accountNumber: z.string().trim().min(1, 'Nhập số tài khoản').max(50),
     accountHolderName: z.string().trim().min(1, 'Nhập tên chủ tài khoản').max(100),
@@ -29,11 +29,6 @@ export const paymentAccountSchema = z
       emptyToNull,
       z.string().trim().regex(QR_PATH_RE, 'Đường dẫn phải dạng /qr/ten-file.png (đã thêm file vào public/qr/)').nullable(),
     ),
-  })
-  .superRefine((data, ctx) => {
-    if (data.currency === 'JPY' && !data.branchName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Nhập tên chi nhánh', path: ['branchName'] });
-    }
   })
   .transform((data) => ({
     ...data,
