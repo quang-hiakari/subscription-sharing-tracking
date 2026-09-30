@@ -18,7 +18,7 @@ export async function createMember(_prev: FormState, formData: FormData): Promis
   if ('error' in parsed) return { error: parsed.error };
   if (await emailTaken(parsed.data.email)) return { error: EMAIL_TAKEN };
 
-  await getDrizzle().insert(members).values(parsed.data);
+  await (await getDrizzle()).insert(members).values(parsed.data);
   redirect(LIST);
 }
 
@@ -31,7 +31,7 @@ export async function updateMember(_prev: FormState, formData: FormData): Promis
   if (!(await getMember(id))) return { error: 'Không tìm thấy người dùng.' };
   if (await emailTaken(parsed.data.email, id)) return { error: EMAIL_TAKEN };
 
-  await getDrizzle().update(members).set(parsed.data).where(eq(members.id, id));
+  await (await getDrizzle()).update(members).set(parsed.data).where(eq(members.id, id));
   redirect(LIST);
 }
 
@@ -43,7 +43,7 @@ export async function deleteMember(_prev: FormState, formData: FormData): Promis
   if ((await countMembershipsForMember(id)) > 0) {
     return { error: 'Người này đã có subscription/lịch sử. Hãy dùng "Ẩn" thay vì xoá.' };
   }
-  await getDrizzle().delete(members).where(eq(members.id, id));
+  await (await getDrizzle()).delete(members).where(eq(members.id, id));
   redirect(LIST);
 }
 
@@ -53,6 +53,6 @@ export async function setMemberArchived(_prev: FormState, formData: FormData): P
   const id = formId(formData);
   if (!id) return { error: 'Không tìm thấy người dùng.' };
   if (!(await getMember(id))) return { error: 'Không tìm thấy người dùng.' };
-  await getDrizzle().update(members).set({ archived: formData.get('archived') === 'true' }).where(eq(members.id, id));
+  await (await getDrizzle()).update(members).set({ archived: formData.get('archived') === 'true' }).where(eq(members.id, id));
   redirect(LIST);
 }

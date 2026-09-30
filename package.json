@@ -10,11 +10,12 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "pages:build": "npx @cloudflare/next-on-pages@1",
-    "preview": "pnpm pages:build && wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat",
-    "deploy": "pnpm pages:build && wrangler pages deploy .vercel/output/static --branch main"
+    "cf:build": "opennextjs-cloudflare build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.6",
     "better-auth": "^1.7.5",
     "drizzle-orm": "^0.45.2",
     "next": "15.5.18",
@@ -23,7 +24,6 @@
     "zod": "^3"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1",
     "@cloudflare/workers-types": "^4.20260515.1",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
@@ -36,6 +36,6 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^2",
-    "wrangler": "^4.91.0"
+    "wrangler": "^4.143.0"
   }
 }

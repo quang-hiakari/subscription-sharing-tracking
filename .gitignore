@@ -4,6 +4,7 @@
 /.next/
 /out/
 /build
+.open-next/
 .DS_Store
 *.pem
 npm-debug.log*

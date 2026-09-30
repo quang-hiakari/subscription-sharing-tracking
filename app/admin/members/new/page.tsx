@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth/require-role';
 import { createMember } from '../actions';
 import { MemberFields } from '../member-fields';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function NewMemberPage() {
   await requireAdmin();

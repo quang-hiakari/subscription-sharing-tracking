@@ -16,7 +16,7 @@ export interface CurrentUser {
  * is no longer an admin or active member (so archiving a member cuts access at once).
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const db = getDB();
+  const db = await getDB();
   const session = await createAuth(db).api.getSession({ headers: await headers() });
   if (!session?.user) return null;
 

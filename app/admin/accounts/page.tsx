@@ -4,7 +4,7 @@ import { EmptyState, PageHeader, TableWrap, td, th } from '@/components/ui/page-
 import { requireAdmin } from '@/lib/auth/require-role';
 import { listAccounts } from '@/lib/queries/admin';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function AccountsPage() {
   await requireAdmin();

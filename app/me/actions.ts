@@ -17,7 +17,7 @@ export async function requestPayment(_prev: FormState, formData: FormData): Prom
   const parsed = parseForm(paymentInputSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 
-  const db = getDB();
+  const db = await getDB();
   const result = await createPaymentRequest(db, user.memberId, { membershipId, ...parsed.data }, new Date());
   if (!result.ok) return { error: result.error };
   await notifyPaymentSubmitted(db, membershipId);

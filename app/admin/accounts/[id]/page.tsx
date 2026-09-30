@@ -6,7 +6,7 @@ import { getAccount } from '@/lib/queries/admin';
 import { AccountFields } from '../account-fields';
 import { deleteAccount, updateAccount } from '../actions';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function EditAccountPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();

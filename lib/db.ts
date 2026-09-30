@@ -1,11 +1,14 @@
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from './db-schema';
 
-export function getDB(): D1Database {
-  return getRequestContext().env.DB;
+// Async mode: sync mode's context isn't reliably available in every scenario (e.g. a Server
+// Action invoked from a dynamic route) — see https://github.com/opennextjs/opennextjs-cloudflare/issues/575.
+export async function getDB(): Promise<D1Database> {
+  const { env } = await getCloudflareContext({ async: true });
+  return env.DB;
 }
 
-export function getDrizzle() {
-  return drizzle(getDB(), { schema });
+export async function getDrizzle() {
+  return drizzle(await getDB(), { schema });
 }

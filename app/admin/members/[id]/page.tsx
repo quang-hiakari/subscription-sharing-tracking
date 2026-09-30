@@ -6,7 +6,7 @@ import { countMembershipsForMember, getMember } from '@/lib/queries/admin';
 import { deleteMember, setMemberArchived, updateMember } from '../actions';
 import { MemberFields } from '../member-fields';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();

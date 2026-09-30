@@ -54,23 +54,25 @@ pnpm exec wrangler d1 migrations apply DB --remote
 
 Migrations are applied from the app repo only, never from `worker/`.
 
-### 2. Pages app
+### 2. App (Cloudflare Worker, via OpenNext)
+
+Deployed with `@opennextjs/cloudflare` as a plain Worker (not Cloudflare Pages — `@cloudflare/next-on-pages` is deprecated/archived and has an unfixed bug where Server Actions 404 on any dynamic `[id]` route; OpenNext is Cloudflare's current, maintained adapter).
 
 ```bash
-pnpm exec wrangler pages project create subscription-sharing-tracking --production-branch main
-pnpm exec wrangler pages secret put BETTER_AUTH_SECRET --project-name subscription-sharing-tracking
-pnpm exec wrangler pages secret put RESEND_API_KEY     --project-name subscription-sharing-tracking
-pnpm exec wrangler pages secret put ADMIN_EMAILS       --project-name subscription-sharing-tracking
-pnpm exec wrangler pages secret put RESEND_FROM_EMAIL  --project-name subscription-sharing-tracking
-
-pnpm exec wrangler pages secret put APP_URL            --project-name subscription-sharing-tracking
+pnpm exec wrangler secret put BETTER_AUTH_SECRET
+pnpm exec wrangler secret put RESEND_API_KEY
+pnpm exec wrangler secret put ADMIN_EMAILS
+pnpm exec wrangler secret put RESEND_FROM_EMAIL
+pnpm exec wrangler secret put APP_URL
 
 pnpm deploy
 ```
 
-Then add the custom domain in the Cloudflare dashboard (Pages project -> Custom domains).
+Then add the custom domain: Cloudflare dashboard → Workers & Pages → this Worker → Settings → Domains & Routes → Add → Custom Domain. (If the hostname was previously a Pages custom domain, remove it there first — Cloudflare won't attach the same hostname to two resources; `wrangler deploy` fails with "already has externally managed DNS records" until it's freed.)
 
 > `APP_URL` is a runtime variable, so the deploy build does not need it, but it must be set as a secret before the first login (auth cannot build links without it). Secrets apply to deployments made after they are set: redeploy after changing one.
+
+> Local dev (`pnpm dev`) uses `next.config.ts`'s `initOpenNextCloudflareForDev()` for D1 bindings — `DEV_PERSIST_DIR` still works the same way. `pnpm preview` runs the actual built Worker locally (`opennextjs-cloudflare build && opennextjs-cloudflare preview`) for a closer-to-production check before deploying.
 
 ### 3. Cron Worker
 

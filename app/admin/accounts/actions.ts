@@ -16,7 +16,7 @@ export async function createAccount(_prev: FormState, formData: FormData): Promi
   const parsed = parseForm(paymentAccountSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 
-  await getDrizzle().insert(paymentAccounts).values(parsed.data);
+  await (await getDrizzle()).insert(paymentAccounts).values(parsed.data);
   redirect(LIST);
 }
 
@@ -30,7 +30,7 @@ export async function updateAccount(_prev: FormState, formData: FormData): Promi
   const existing = await getAccount(id);
   if (!existing) return { error: 'Không tìm thấy tài khoản.' };
 
-  await getDrizzle().update(paymentAccounts).set(parsed.data).where(eq(paymentAccounts.id, id));
+  await (await getDrizzle()).update(paymentAccounts).set(parsed.data).where(eq(paymentAccounts.id, id));
   redirect(LIST);
 }
 
@@ -41,6 +41,6 @@ export async function deleteAccount(_prev: FormState, formData: FormData): Promi
   if ((await countSubscriptionsForAccount(id)) > 0) {
     return { error: 'Không xoá được: còn subscription đang dùng tài khoản này.' };
   }
-  await getDrizzle().delete(paymentAccounts).where(eq(paymentAccounts.id, id));
+  await (await getDrizzle()).delete(paymentAccounts).where(eq(paymentAccounts.id, id));
   redirect(LIST);
 }

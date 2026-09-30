@@ -6,7 +6,7 @@ import { listAccounts } from '@/lib/queries/admin';
 import { createSubscription } from '../actions';
 import { SubscriptionFields } from '../subscription-fields';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function NewSubscriptionPage() {
   await requireAdmin();

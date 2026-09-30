@@ -3,7 +3,7 @@ import { Badge, EmptyState, PageHeader, TableWrap, td, th } from '@/components/u
 import { requireAdmin } from '@/lib/auth/require-role';
 import { listMembers } from '@/lib/queries/admin';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function MembersPage() {
   await requireAdmin();

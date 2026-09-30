@@ -22,7 +22,7 @@ export async function sendReminderNow(_prev: FormState, formData: FormData): Pro
   const id = formId(formData);
   if (!id) return { error: 'Không tìm thấy thành viên trong subscription.' };
   const result = await sendManualReminder(
-    { db: getDB(), send: sendMail, appUrl: process.env.APP_URL ?? '', now: new Date() },
+    { db: await getDB(), send: sendMail, appUrl: process.env.APP_URL ?? '', now: new Date() },
     id,
   );
   if (!result.ok) return { error: result.error };
@@ -37,7 +37,7 @@ export async function recordMembershipPayment(_prev: FormState, formData: FormDa
   const parsed = parseForm(paymentInputSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 
-  const result = await recordPayment(getDB(), { membershipId: id, ...parsed.data }, new Date());
+  const result = await recordPayment(await getDB(), { membershipId: id, ...parsed.data }, new Date());
   if (!result.ok) return { error: result.error };
   redirect(`${DETAIL}/${id}`);
 }
@@ -50,7 +50,7 @@ export async function updateMembership(_prev: FormState, formData: FormData): Pr
   if ('error' in parsed) return { error: parsed.error };
   if (!(await getMembership(id))) return { error: 'Không tìm thấy thành viên trong subscription.' };
 
-  await getDrizzle().update(memberships).set(parsed.data).where(eq(memberships.id, id));
+  await (await getDrizzle()).update(memberships).set(parsed.data).where(eq(memberships.id, id));
   redirect(`${DETAIL}/${id}`);
 }
 
@@ -67,7 +67,7 @@ export async function deleteMembership(_prev: FormState, formData: FormData): Pr
   const membership = await getMembership(id);
   if (!membership) return { error: 'Không tìm thấy thành viên trong subscription.' };
 
-  const db = getDrizzle();
+  const db = await getDrizzle();
   await db.batch([
     db.delete(reminderLog).where(eq(reminderLog.membershipId, id)),
     db.delete(memberships).where(eq(memberships.id, id)),
@@ -81,6 +81,6 @@ export async function setMembershipArchived(_prev: FormState, formData: FormData
   const id = formId(formData);
   if (!id) return { error: 'Không tìm thấy thành viên trong subscription.' };
   if (!(await getMembership(id))) return { error: 'Không tìm thấy thành viên trong subscription.' };
-  await getDrizzle().update(memberships).set({ archived: formData.get('archived') === 'true' }).where(eq(memberships.id, id));
+  await (await getDrizzle()).update(memberships).set({ archived: formData.get('archived') === 'true' }).where(eq(memberships.id, id));
   redirect(`${DETAIL}/${id}`);
 }

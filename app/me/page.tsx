@@ -14,7 +14,7 @@ import { getMyMemberships } from '@/lib/queries/payments';
 import { membershipStatus } from '@/lib/queries/membership-status';
 import { requestPayment } from './actions';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 // The amount owed is exactly what the admin entered, in this member's own currency. A
 // subscription can have accounts in more than one currency, so each account also shows how much

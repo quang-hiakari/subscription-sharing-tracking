@@ -20,8 +20,8 @@ async function accountsProblem(paymentAccountIds: number[]): Promise<string | nu
 }
 
 /** Replaces a subscription's linked accounts in one batch (delete-all then insert-set). */
-function setAccountLinks(subscriptionId: number, paymentAccountIds: number[]) {
-  const db = getDrizzle();
+async function setAccountLinks(subscriptionId: number, paymentAccountIds: number[]) {
+  const db = await getDrizzle();
   return db.batch([
     db.delete(subscriptionPaymentAccounts).where(eq(subscriptionPaymentAccounts.subscriptionId, subscriptionId)),
     db.insert(subscriptionPaymentAccounts).values(paymentAccountIds.map((paymentAccountId) => ({ subscriptionId, paymentAccountId }))),
@@ -36,7 +36,7 @@ export async function createSubscription(_prev: FormState, formData: FormData): 
   const problem = await accountsProblem(paymentAccountIds);
   if (problem) return { error: problem };
 
-  const [row] = await getDrizzle().insert(subscriptions).values(values).returning({ id: subscriptions.id });
+  const [row] = await (await getDrizzle()).insert(subscriptions).values(values).returning({ id: subscriptions.id });
   await setAccountLinks(row.id, paymentAccountIds);
   redirect(LIST);
 }
@@ -56,7 +56,7 @@ export async function updateSubscription(_prev: FormState, formData: FormData): 
   const problem = await accountsProblem(paymentAccountIds);
   if (problem) return { error: problem };
 
-  await getDrizzle().update(subscriptions).set(values).where(eq(subscriptions.id, id));
+  await (await getDrizzle()).update(subscriptions).set(values).where(eq(subscriptions.id, id));
   await setAccountLinks(id, paymentAccountIds);
   redirect(LIST);
 }
@@ -68,7 +68,7 @@ export async function deleteSubscription(_prev: FormState, formData: FormData): 
   if ((await countMembershipsForSubscription(id)) > 0) {
     return { error: 'Không xoá được: subscription đã có thành viên (kể cả đã ẩn).' };
   }
-  await getDrizzle().delete(subscriptions).where(eq(subscriptions.id, id));
+  await (await getDrizzle()).delete(subscriptions).where(eq(subscriptions.id, id));
   redirect(LIST);
 }
 
@@ -92,7 +92,7 @@ export async function addMemberToSubscription(_prev: FormState, formData: FormDa
     memberId = member.id;
   } else {
     if (await emailTaken(parsed.data.email)) return { error: 'Email này đã được dùng cho người khác.' };
-    const [row] = await getDrizzle()
+    const [row] = await (await getDrizzle())
       .insert(members)
       .values({ name: parsed.data.name, email: parsed.data.email })
       .returning({ id: members.id });
@@ -103,7 +103,7 @@ export async function addMemberToSubscription(_prev: FormState, formData: FormDa
     return { error: 'Người này đã có trong subscription này (có thể đang bị ẩn).' };
   }
 
-  await getDrizzle().insert(memberships).values({
+  await (await getDrizzle()).insert(memberships).values({
     memberId,
     subscriptionId,
     currency: parsed.data.currency,

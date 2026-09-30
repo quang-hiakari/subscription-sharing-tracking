@@ -6,17 +6,20 @@ import { membershipStatus } from './membership-status';
 // Read helpers for the admin screens. Mutations live in each screen's actions.ts.
 
 export async function listAccounts() {
-  return getDrizzle().select().from(paymentAccounts).orderBy(paymentAccounts.currency, paymentAccounts.label);
+  const db = await getDrizzle();
+  return db.select().from(paymentAccounts).orderBy(paymentAccounts.currency, paymentAccounts.label);
 }
 
 export async function getAccount(id: number) {
-  const [row] = await getDrizzle().select().from(paymentAccounts).where(eq(paymentAccounts.id, id));
+  const db = await getDrizzle();
+  const [row] = await db.select().from(paymentAccounts).where(eq(paymentAccounts.id, id));
   return row ?? null;
 }
 
 /** A subscription's own payment accounts (it can have more than one), in a stable order. */
 export async function listAccountsForSubscription(subscriptionId: number) {
-  return getDrizzle()
+  const db = await getDrizzle();
+  return db
     .select({
       id: paymentAccounts.id,
       currency: paymentAccounts.currency,
@@ -34,7 +37,8 @@ export async function listAccountsForSubscription(subscriptionId: number) {
 }
 
 export async function listSubscriptions() {
-  const subs = await getDrizzle()
+  const db = await getDrizzle();
+  const subs = await db
     .select({
       id: subscriptions.id,
       name: subscriptions.name,
@@ -47,7 +51,7 @@ export async function listSubscriptions() {
     .from(subscriptions)
     .orderBy(subscriptions.name);
 
-  const links = await getDrizzle()
+  const links = await db
     .select({ subscriptionId: subscriptionPaymentAccounts.subscriptionId, label: paymentAccounts.label })
     .from(subscriptionPaymentAccounts)
     .innerJoin(paymentAccounts, eq(subscriptionPaymentAccounts.paymentAccountId, paymentAccounts.id));
@@ -62,16 +66,19 @@ export async function listSubscriptions() {
 }
 
 export async function getSubscription(id: number) {
-  const [row] = await getDrizzle().select().from(subscriptions).where(eq(subscriptions.id, id));
+  const db = await getDrizzle();
+  const [row] = await db.select().from(subscriptions).where(eq(subscriptions.id, id));
   return row ?? null;
 }
 
 export async function listMembers() {
-  return getDrizzle().select().from(members).orderBy(members.name);
+  const db = await getDrizzle();
+  return db.select().from(members).orderBy(members.name);
 }
 
 export async function getMember(id: number) {
-  const [row] = await getDrizzle().select().from(members).where(eq(members.id, id));
+  const db = await getDrizzle();
+  const [row] = await db.select().from(members).where(eq(members.id, id));
   return row ?? null;
 }
 
@@ -84,7 +91,8 @@ export async function getMember(id: number) {
 export async function listMemberships(includeArchived = false, subscriptionId?: number) {
   const activeFilter = includeArchived ? undefined : and(eq(memberships.archived, false), eq(members.archived, false));
   const scopeFilter = subscriptionId === undefined ? undefined : eq(memberships.subscriptionId, subscriptionId);
-  return getDrizzle()
+  const db = await getDrizzle();
+  return db
     .select({
       id: memberships.id,
       memberId: members.id,
@@ -110,7 +118,8 @@ export async function listMemberships(includeArchived = false, subscriptionId?: 
 }
 
 export async function getMembership(id: number) {
-  const [row] = await getDrizzle()
+  const db = await getDrizzle();
+  const [row] = await db
     .select({
       id: memberships.id,
       memberName: members.name,
@@ -134,7 +143,8 @@ export async function getMembership(id: number) {
 
 /** Active members not already in this subscription (any status, since re-adding an archived one is blocked). */
 export async function listAvailableMembersForSubscription(subscriptionId: number) {
-  const taken = await getDrizzle().select({ memberId: memberships.memberId }).from(memberships).where(eq(memberships.subscriptionId, subscriptionId));
+  const db = await getDrizzle();
+  const taken = await db.select({ memberId: memberships.memberId }).from(memberships).where(eq(memberships.subscriptionId, subscriptionId));
   const takenIds = new Set(taken.map((t) => t.memberId));
   const all = await listMembers();
   return all.filter((m) => !m.archived && !takenIds.has(m.id));
@@ -150,14 +160,16 @@ export async function listAttention(today: string) {
 }
 
 export async function countPendingPayments(): Promise<number> {
-  const [row] = await getDrizzle().select({ n: count() }).from(payments).where(eq(payments.status, 'pending'));
+  const db = await getDrizzle();
+  const [row] = await db.select({ n: count() }).from(payments).where(eq(payments.status, 'pending'));
   return row.n;
 }
 
 // Reference counts used by delete guards.
 
 export async function countSubscriptionsForAccount(accountId: number): Promise<number> {
-  const [row] = await getDrizzle()
+  const db = await getDrizzle();
+  const [row] = await db
     .select({ n: count() })
     .from(subscriptionPaymentAccounts)
     .where(eq(subscriptionPaymentAccounts.paymentAccountId, accountId));
@@ -165,23 +177,27 @@ export async function countSubscriptionsForAccount(accountId: number): Promise<n
 }
 
 export async function countMembershipsForSubscription(subscriptionId: number): Promise<number> {
-  const [row] = await getDrizzle().select({ n: count() }).from(memberships).where(eq(memberships.subscriptionId, subscriptionId));
+  const db = await getDrizzle();
+  const [row] = await db.select({ n: count() }).from(memberships).where(eq(memberships.subscriptionId, subscriptionId));
   return row.n;
 }
 
 export async function countMembershipsForMember(memberId: number): Promise<number> {
-  const [row] = await getDrizzle().select({ n: count() }).from(memberships).where(eq(memberships.memberId, memberId));
+  const db = await getDrizzle();
+  const [row] = await db.select({ n: count() }).from(memberships).where(eq(memberships.memberId, memberId));
   return row.n;
 }
 
 export async function countPaymentsForMembership(membershipId: number): Promise<number> {
-  const [row] = await getDrizzle().select({ n: count() }).from(payments).where(eq(payments.membershipId, membershipId));
+  const db = await getDrizzle();
+  const [row] = await db.select({ n: count() }).from(payments).where(eq(payments.membershipId, membershipId));
   return row.n;
 }
 
 /** True when another member already uses this email (case-insensitive: emails are stored lowercase). */
 export async function emailTaken(email: string, exceptMemberId?: number): Promise<boolean> {
-  const rows = await getDrizzle()
+  const db = await getDrizzle();
+  const rows = await db
     .select({ id: members.id })
     .from(members)
     .where(exceptMemberId === undefined ? eq(members.email, email) : and(eq(members.email, email), ne(members.id, exceptMemberId)));
@@ -189,7 +205,8 @@ export async function emailTaken(email: string, exceptMemberId?: number): Promis
 }
 
 export async function membershipExists(memberId: number, subscriptionId: number): Promise<boolean> {
-  const rows = await getDrizzle()
+  const db = await getDrizzle();
+  const rows = await db
     .select({ id: memberships.id })
     .from(memberships)
     .where(and(eq(memberships.memberId, memberId), eq(memberships.subscriptionId, subscriptionId)));
@@ -198,7 +215,8 @@ export async function membershipExists(memberId: number, subscriptionId: number)
 
 /** Most recent reminder emails for a membership (cron milestones and manual sends). */
 export async function listRemindersForMembership(membershipId: number, limit = 5) {
-  return getDrizzle()
+  const db = await getDrizzle();
+  return db
     .select({ id: reminderLog.id, kind: reminderLog.kind, dueDate: reminderLog.dueDate, sentAt: reminderLog.sentAt })
     .from(reminderLog)
     .where(eq(reminderLog.membershipId, membershipId))

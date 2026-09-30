@@ -15,7 +15,7 @@ import { addMemberToSubscription, deleteSubscription, updateSubscription } from 
 import { SubscriptionFields } from '../subscription-fields';
 import { AddMemberForm } from './add-member-form';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function EditSubscriptionPage({
   params,

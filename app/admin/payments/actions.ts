@@ -16,7 +16,7 @@ export async function approve(_prev: FormState, formData: FormData): Promise<For
   if (!paymentId) return { error: 'Không tìm thấy thanh toán.' };
   const parsed = parseForm(approvePaymentSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
-  const result = await approvePayment(getDB(), paymentId, new Date(), parsed.data.monthsOverride ?? undefined);
+  const result = await approvePayment(await getDB(), paymentId, new Date(), parsed.data.monthsOverride ?? undefined);
   if (!result.ok) return { error: result.error };
   redirect(QUEUE);
 }
@@ -28,7 +28,7 @@ export async function reject(_prev: FormState, formData: FormData): Promise<Form
   const parsed = parseForm(rejectSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 
-  const db = getDB();
+  const db = await getDB();
   const result = await rejectPayment(db, paymentId, parsed.data.reason, new Date());
   if (!result.ok) return { error: result.error };
   await notifyPaymentRejected(db, paymentId);

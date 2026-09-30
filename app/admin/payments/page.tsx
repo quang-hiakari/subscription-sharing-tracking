@@ -11,7 +11,7 @@ import { getFx } from '@/lib/queries/fx';
 import { listPendingPayments, listRecentDecidedPayments } from '@/lib/queries/payments';
 import { approve, reject } from './actions';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function PaymentsPage() {
   await requireAdmin();

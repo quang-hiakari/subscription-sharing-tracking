@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth/require-role';
 import { AccountFields } from '../account-fields';
 import { createAccount } from '../actions';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function NewAccountPage() {
   await requireAdmin();

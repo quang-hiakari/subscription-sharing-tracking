@@ -16,6 +16,7 @@ const eslintConfig = [
       "node_modules/**",
       ".next/**",
       ".vercel/**",
+      ".open-next/**",
       "**/.wrangler/**",
       "out/**",
       "build/**",
@@ -23,7 +24,6 @@ const eslintConfig = [
     ],
   },
   {
-    // Server Actions bound with .bind(null, id) must still declare (prev, formData).
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },

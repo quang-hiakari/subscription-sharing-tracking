@@ -1,12 +1,12 @@
 # System Architecture
 
 ```
-Browser ──> Cloudflare Pages (Next.js, edge runtime) ──> D1 (SQLite) <── Cloudflare Worker (cron 00:00 UTC = 09:00 JST)
+Browser ──> Cloudflare Worker (Next.js via OpenNext) ──> D1 (SQLite) <── Cloudflare Worker (cron 00:00 UTC = 09:00 JST)
                  │                                                            │
                  └── Resend (email, REST) <───────────────────────────────────┘        open.er-api.com (JPY→VND, from the Worker)
 ```
 
-Both the Pages app and the Worker use the same D1 database. Migrations are applied from the app repo only.
+The app deploys as a Cloudflare Worker via `@opennextjs/cloudflare` (built with `pnpm cf:build`, deployed with `pnpm deploy` / `wrangler deploy`) — not Cloudflare Pages. `@cloudflare/next-on-pages` (the old Pages adapter) is deprecated/archived and has an unfixed bug where a Server Action 404s in production when called from a dynamic `[id]` route; see `docs/code-standards.md`'s note on never binding action arguments. The app Worker and the cron Worker (`worker/`) are separate deployments sharing the same D1 database. Migrations are applied from the app repo only.
 
 ## Data model (`lib/db-schema.ts`)
 

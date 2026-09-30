@@ -4,8 +4,11 @@ import { members, memberships, paymentAccounts, payments, subscriptionPaymentAcc
 
 // Payment reads for the admin queue and the member dashboard.
 
-function paymentsWithContext() {
-  return getDrizzle()
+// Takes `db` (already awaited by the caller) rather than awaiting it itself: returning this
+// query builder from an async function would flatten/resolve it immediately (it's thenable),
+// losing the ability to chain .where()/.orderBy() on it afterwards.
+function paymentsWithContext(db: Awaited<ReturnType<typeof getDrizzle>>) {
+  return db
     .select({
       id: payments.id,
       membershipId: payments.membershipId,
@@ -30,18 +33,21 @@ function paymentsWithContext() {
 }
 
 export async function listPendingPayments() {
-  return paymentsWithContext().where(eq(payments.status, 'pending')).orderBy(payments.createdAt);
+  const db = await getDrizzle();
+  return paymentsWithContext(db).where(eq(payments.status, 'pending')).orderBy(payments.createdAt);
 }
 
 export async function listRecentDecidedPayments(limit = 30) {
-  return paymentsWithContext()
+  const db = await getDrizzle();
+  return paymentsWithContext(db)
     .where(inArray(payments.status, ['approved', 'rejected']))
     .orderBy(desc(payments.decidedAt))
     .limit(limit);
 }
 
 export async function listPaymentsForMembership(membershipId: number) {
-  return paymentsWithContext().where(eq(payments.membershipId, membershipId)).orderBy(desc(payments.createdAt));
+  const db = await getDrizzle();
+  return paymentsWithContext(db).where(eq(payments.membershipId, membershipId)).orderBy(desc(payments.createdAt));
 }
 
 /**
@@ -50,7 +56,7 @@ export async function listPaymentsForMembership(membershipId: number) {
  * member both not archived.
  */
 export async function getMyMemberships(memberId: number) {
-  const db = getDrizzle();
+  const db = await getDrizzle();
   const rows = await db
     .select({
       id: memberships.id,

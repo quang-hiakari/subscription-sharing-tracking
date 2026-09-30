@@ -10,7 +10,7 @@ import { formatMoney, yearlyToMonthly } from '@/lib/format/money';
 import { countPendingPayments, listAttention, listMemberships } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
   const user = await requireAdmin();

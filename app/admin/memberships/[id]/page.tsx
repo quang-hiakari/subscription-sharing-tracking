@@ -12,7 +12,7 @@ import { listPaymentsForMembership } from '@/lib/queries/payments';
 import { deleteMembership, recordMembershipPayment, sendReminderNow, setMembershipArchived, updateMembership } from '../actions';
 import { MembershipTermsFields } from '../membership-fields';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 function reminderLabel(kind: string): string {
   if (kind === 'manual') return 'Gửi tay';

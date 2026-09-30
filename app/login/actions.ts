@@ -20,7 +20,7 @@ export async function requestLogin(rawEmail: string): Promise<{ error?: string }
   if (!parsed.success) return { error: 'Email không hợp lệ.' };
   const email = parsed.data;
 
-  const db = getDB();
+  const db = await getDB();
   if (!(await isLoginAllowed(db, email, process.env.ADMIN_EMAILS))) return {};
 
   const now = Date.now();
@@ -56,7 +56,7 @@ export async function requestLogin(rawEmail: string): Promise<{ error?: string }
 export async function verifyCode(rawEmail: string, otp: string): Promise<{ error?: string }> {
   const email = normalizeEmail(rawEmail);
   try {
-    await createAuth(getDB()).api.signInEmailOTP({
+    await createAuth(await getDB()).api.signInEmailOTP({
       body: { email, otp: otp.trim() },
       headers: await headers(),
     });

@@ -23,7 +23,7 @@ Receipt upload, i18n, bank auto-detection, online payment, fully custom reminder
 | Decision | Why |
 |---|---|
 | Due date is `paid_through`, not fixed periods | Members prepay 1, 6 or 12 months; a period model breaks. |
-| Separate cron Worker | Cloudflare Pages has no cron triggers. |
+| Separate cron Worker | Keeps the (tiny) daily job's deploy independent of the app's; it doesn't need the Next.js bundle at all. |
 | Magic link + code in the same email | Outlook/M365 link scanners can burn a one-time link. |
 | Archive instead of delete once there is history | Keeps the financial trail; archived people cannot sign in and get no reminders. |
 | FX from `open.er-api.com` | No key, daily, has VND (the ECB feed has none). Requires attribution. |

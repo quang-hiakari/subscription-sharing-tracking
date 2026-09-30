@@ -7,7 +7,7 @@ import { listSubscriptions } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
 import { DEFAULT_REMIND_DAYS_BEFORE } from '@/lib/reminders/constants';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function SubscriptionsPage() {
   await requireAdmin();
