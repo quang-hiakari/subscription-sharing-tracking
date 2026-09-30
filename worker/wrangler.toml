@@ -15,7 +15,7 @@ database_id = "882290cd-18ec-4c73-84a8-768c1cd82c90"
 
 [vars]
 # Public URL of the app, used for links in emails.
-APP_URL = "https://subscription.quangnguyen.cc"
+APP_URL = "https://subscriptions.quangnguyen.cc"
 # Sender on a domain verified in Resend.
 RESEND_FROM_EMAIL = "Subscription Notification<subscription@quangnguyen.cc>"
 # Secret, set with: wrangler secret put RESEND_API_KEY -c worker/wrangler.toml
