@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/require-role';
 import { getDrizzle } from '@/lib/db';
 import { members, memberships, subscriptionPaymentAccounts, subscriptions } from '@/lib/db-schema';
-import type { FormState } from '@/lib/form-state';
+import { formId, type FormState } from '@/lib/form-state';
 import { countMembershipsForSubscription, emailTaken, getMember, getSubscription, listAccounts, membershipExists } from '@/lib/queries/admin';
 import { addMemberToSubscriptionSchema, parseForm, subscriptionSchema } from '@/lib/validation/schemas';
 
@@ -41,8 +41,10 @@ export async function createSubscription(_prev: FormState, formData: FormData): 
   redirect(LIST);
 }
 
-export async function updateSubscription(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function updateSubscription(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy subscription.' };
   const parsed = parseForm(subscriptionSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 
@@ -59,8 +61,10 @@ export async function updateSubscription(id: number, _prev: FormState, formData:
   redirect(LIST);
 }
 
-export async function deleteSubscription(id: number, _prev: FormState, _formData: FormData): Promise<FormState> {
+export async function deleteSubscription(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy subscription.' };
   if ((await countMembershipsForSubscription(id)) > 0) {
     return { error: 'Không xoá được: subscription đã có thành viên (kể cả đã ẩn).' };
   }
@@ -69,11 +73,11 @@ export async function deleteSubscription(id: number, _prev: FormState, _formData
 }
 
 /** Adds a member to a subscription: an existing member (by id) or a brand-new one (name + email), in one step.
- * Lives here (not in memberships/actions.ts) because its only caller is this subscription's own detail page —
- * co-locating avoids cross-directory Server Action references, which Cloudflare Pages' per-route edge
- * function splitting does not reliably bundle (calling it 404s in production despite working locally). */
-export async function addMemberToSubscription(subscriptionId: number, _prev: FormState, formData: FormData): Promise<FormState> {
+ * Lives here (not in memberships/actions.ts) since its only caller is this subscription's own detail page. */
+export async function addMemberToSubscription(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const subscriptionId = formId(formData);
+  if (!subscriptionId) return { error: 'Subscription không tồn tại.' };
   const parsed = parseForm(addMemberToSubscriptionSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 

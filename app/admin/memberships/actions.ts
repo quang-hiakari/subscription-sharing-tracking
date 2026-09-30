@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/require-role';
 import { getDrizzle, getDB } from '@/lib/db';
 import { memberships, reminderLog } from '@/lib/db-schema';
-import type { FormState } from '@/lib/form-state';
+import { formId, type FormState } from '@/lib/form-state';
 import { countPaymentsForMembership, getMembership } from '@/lib/queries/admin';
 import { sendMail } from '@/lib/email/send-mail';
 import { recordPayment } from '@/lib/payments/service';
@@ -17,8 +17,10 @@ import { membershipUpdateSchema, parseForm, paymentInputSchema } from '@/lib/val
 const DETAIL = '/admin/memberships';
 
 /** Emails this member a payment reminder right now (logged as `manual`; the daily cron will not repeat it today). */
-export async function sendReminderNow(id: number, _prev: FormState, _formData: FormData): Promise<FormState> {
+export async function sendReminderNow(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy thành viên trong subscription.' };
   const result = await sendManualReminder(
     { db: getDB(), send: sendMail, appUrl: process.env.APP_URL ?? '', now: new Date() },
     id,
@@ -28,8 +30,10 @@ export async function sendReminderNow(id: number, _prev: FormState, _formData: F
 }
 
 /** Admin records money received outside the app (cash, bank transfer): approved at once, due date moves. */
-export async function recordMembershipPayment(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function recordMembershipPayment(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy thành viên trong subscription.' };
   const parsed = parseForm(paymentInputSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 
@@ -38,8 +42,10 @@ export async function recordMembershipPayment(id: number, _prev: FormState, form
   redirect(`${DETAIL}/${id}`);
 }
 
-export async function updateMembership(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function updateMembership(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy thành viên trong subscription.' };
   const parsed = parseForm(membershipUpdateSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
   if (!(await getMembership(id))) return { error: 'Không tìm thấy thành viên trong subscription.' };
@@ -49,8 +55,10 @@ export async function updateMembership(id: number, _prev: FormState, formData: F
 }
 
 /** Hard delete only when there is no payment history (reminder log entries go with it); otherwise archive. */
-export async function deleteMembership(id: number, _prev: FormState, _formData: FormData): Promise<FormState> {
+export async function deleteMembership(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy thành viên trong subscription.' };
   if ((await countPaymentsForMembership(id)) > 0) {
     return { error: 'Đã có lịch sử thanh toán. Hãy dùng "Ẩn" thay vì xoá.' };
   }
@@ -68,14 +76,11 @@ export async function deleteMembership(id: number, _prev: FormState, _formData: 
 }
 
 /** Archived memberships are hidden from the member, skipped by reminders and the dashboard; history is kept. */
-export async function setMembershipArchived(
-  id: number,
-  archived: boolean,
-  _prev: FormState,
-  _formData: FormData,
-): Promise<FormState> {
+export async function setMembershipArchived(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy thành viên trong subscription.' };
   if (!(await getMembership(id))) return { error: 'Không tìm thấy thành viên trong subscription.' };
-  await getDrizzle().update(memberships).set({ archived }).where(eq(memberships.id, id));
+  await getDrizzle().update(memberships).set({ archived: formData.get('archived') === 'true' }).where(eq(memberships.id, id));
   redirect(`${DETAIL}/${id}`);
 }

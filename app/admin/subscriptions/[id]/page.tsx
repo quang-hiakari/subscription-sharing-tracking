@@ -49,7 +49,7 @@ export default async function EditSubscriptionPage({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Thông tin subscription">
-          <ActionForm action={updateSubscription.bind(null, id)} submitLabel="Lưu">
+          <ActionForm action={updateSubscription} submitLabel="Lưu" hidden={{ id }}>
             <SubscriptionFields accounts={accounts} defaults={{ ...subscription, paymentAccountIds: linkedAccounts.map((a) => a.id) }} />
           </ActionForm>
           <div className="mt-4 grid grid-cols-2 gap-3 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
@@ -76,7 +76,7 @@ export default async function EditSubscriptionPage({
         </Card>
 
         <Card title="Thêm thành viên">
-          <ActionForm action={addMemberToSubscription.bind(null, id)} submitLabel="Thêm thành viên">
+          <ActionForm action={addMemberToSubscription} submitLabel="Thêm thành viên" hidden={{ id }}>
             <AddMemberForm availableMembers={availableMembers} paidThrough={today} billingCycle={billingCycle} defaultCurrency={currency} />
           </ActionForm>
         </Card>
@@ -128,10 +128,11 @@ export default async function EditSubscriptionPage({
 
       <Card>
         <ActionForm
-          action={deleteSubscription.bind(null, id)}
+          action={deleteSubscription}
           submitLabel="Xoá subscription"
           variant="danger"
           confirmMessage="Xoá subscription này?"
+          hidden={{ id }}
         />
       </Card>
     </div>

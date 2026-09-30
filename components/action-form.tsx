@@ -15,11 +15,14 @@ interface ActionFormProps {
   variant?: keyof typeof VARIANTS;
   /** Asks the browser to confirm before submitting (destructive actions). */
   confirmMessage?: string;
+  /** Extra fields submitted with the form but not part of the visible UI — e.g. a row's id.
+   * Used instead of `action.bind(null, id)`, which 404s in production (see `formId`). */
+  hidden?: Record<string, string | number>;
   children?: React.ReactNode;
 }
 
 /** A form bound to a Server Action that shows the action's error message and a pending state. */
-export function ActionForm({ action, submitLabel, variant = 'primary', confirmMessage, children }: ActionFormProps) {
+export function ActionForm({ action, submitLabel, variant = 'primary', confirmMessage, hidden, children }: ActionFormProps) {
   const [state, formAction, pending] = useActionState(action, {} as FormState);
 
   return (
@@ -31,6 +34,7 @@ export function ActionForm({ action, submitLabel, variant = 'primary', confirmMe
       className="space-y-3"
     >
       {state.error && <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-700">{state.error}</p>}
+      {hidden && Object.entries(hidden).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
       {children}
       <button
         type="submit"

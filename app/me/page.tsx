@@ -91,7 +91,7 @@ export default async function MePage() {
               <details className="rounded-md border border-gray-200 p-3">
                 <summary className="cursor-pointer text-sm font-medium text-blue-700">Tôi đã chuyển tiền</summary>
                 <div className="mt-3">
-                  <ActionForm action={requestPayment.bind(null, item.id)} submitLabel="Báo đã trả">
+                  <ActionForm action={requestPayment} submitLabel="Báo đã trả" hidden={{ membershipId: item.id }}>
                     <PaymentFields monthlyShare={item.monthlyShare} currencyLabel={currency} billingCycle={billingCycle} />
                   </ActionForm>
                 </div>

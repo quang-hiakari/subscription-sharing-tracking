@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/require-role';
 import { getDrizzle } from '@/lib/db';
 import { paymentAccounts } from '@/lib/db-schema';
-import type { FormState } from '@/lib/form-state';
+import { formId, type FormState } from '@/lib/form-state';
 import { countSubscriptionsForAccount, getAccount } from '@/lib/queries/admin';
 import { parseForm, paymentAccountSchema } from '@/lib/validation/schemas';
 
@@ -20,8 +20,10 @@ export async function createAccount(_prev: FormState, formData: FormData): Promi
   redirect(LIST);
 }
 
-export async function updateAccount(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function updateAccount(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy tài khoản.' };
   const parsed = parseForm(paymentAccountSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
 
@@ -32,8 +34,10 @@ export async function updateAccount(id: number, _prev: FormState, formData: Form
   redirect(LIST);
 }
 
-export async function deleteAccount(id: number, _prev: FormState, _formData: FormData): Promise<FormState> {
+export async function deleteAccount(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy tài khoản.' };
   if ((await countSubscriptionsForAccount(id)) > 0) {
     return { error: 'Không xoá được: còn subscription đang dùng tài khoản này.' };
   }

@@ -19,7 +19,7 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
     <div className="max-w-2xl space-y-6">
       <PageHeader title={`Sửa: ${member.name}`} />
       <Card>
-        <ActionForm action={updateMember.bind(null, id)} submitLabel="Lưu">
+        <ActionForm action={updateMember} submitLabel="Lưu" hidden={{ id }}>
           <MemberFields defaults={member} />
         </ActionForm>
       </Card>
@@ -27,23 +27,25 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
       <Card>
         <div className="space-y-3">
           {member.archived ? (
-            <ActionForm action={setMemberArchived.bind(null, id, false)} submitLabel="Bỏ ẩn" variant="secondary" />
+            <ActionForm action={setMemberArchived} submitLabel="Bỏ ẩn" variant="secondary" hidden={{ id, archived: 'false' }} />
           ) : (
             <ActionForm
-              action={setMemberArchived.bind(null, id, true)}
+              action={setMemberArchived}
               submitLabel="Ẩn người này"
               variant="secondary"
               confirmMessage="Ẩn người này? Họ sẽ không đăng nhập được và không bị nhắc nữa."
+              hidden={{ id, archived: 'true' }}
             />
           )}
           {hasHistory ? (
             <p className="text-xs text-gray-500">Đã có subscription/lịch sử nên không xoá được, chỉ ẩn.</p>
           ) : (
             <ActionForm
-              action={deleteMember.bind(null, id)}
+              action={deleteMember}
               submitLabel="Xoá người này"
               variant="danger"
               confirmMessage="Xoá người này?"
+              hidden={{ id }}
             />
           )}
         </div>

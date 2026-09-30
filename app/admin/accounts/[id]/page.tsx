@@ -18,16 +18,17 @@ export default async function EditAccountPage({ params }: { params: Promise<{ id
     <div className="max-w-3xl space-y-6">
       <PageHeader title={`Sửa tài khoản: ${account.label}`} />
       <Card>
-        <ActionForm action={updateAccount.bind(null, id)} submitLabel="Lưu">
+        <ActionForm action={updateAccount} submitLabel="Lưu" hidden={{ id }}>
           <AccountFields defaults={account} />
         </ActionForm>
       </Card>
       <Card>
         <ActionForm
-          action={deleteAccount.bind(null, id)}
+          action={deleteAccount}
           submitLabel="Xoá tài khoản"
           variant="danger"
           confirmMessage="Xoá tài khoản này?"
+          hidden={{ id }}
         />
       </Card>
     </div>

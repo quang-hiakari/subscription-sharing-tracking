@@ -45,10 +45,10 @@ export default async function PaymentsPage() {
                 </div>
                 {p.note && <div className="text-sm">Ghi chú: {p.note}</div>}
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <ActionForm action={approve.bind(null, p.id)} submitLabel="Xác nhận đã nhận tiền">
+                  <ActionForm action={approve} submitLabel="Xác nhận đã nhận tiền" hidden={{ paymentId: p.id }}>
                     <ApproveMonthsChoice reportedMonths={p.monthsCovered} />
                   </ActionForm>
-                  <ActionForm action={reject.bind(null, p.id)} submitLabel="Từ chối" variant="secondary">
+                  <ActionForm action={reject} submitLabel="Từ chối" variant="secondary" hidden={{ paymentId: p.id }}>
                     <Field label="Lý do từ chối" name="reason" required maxLength={200} />
                   </ActionForm>
                 </div>

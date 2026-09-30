@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/require-role';
 import { getDrizzle } from '@/lib/db';
 import { members } from '@/lib/db-schema';
-import type { FormState } from '@/lib/form-state';
+import { formId, type FormState } from '@/lib/form-state';
 import { countMembershipsForMember, emailTaken, getMember } from '@/lib/queries/admin';
 import { memberSchema, parseForm } from '@/lib/validation/schemas';
 
@@ -22,8 +22,10 @@ export async function createMember(_prev: FormState, formData: FormData): Promis
   redirect(LIST);
 }
 
-export async function updateMember(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function updateMember(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy người dùng.' };
   const parsed = parseForm(memberSchema, formData);
   if ('error' in parsed) return { error: parsed.error };
   if (!(await getMember(id))) return { error: 'Không tìm thấy người dùng.' };
@@ -34,8 +36,10 @@ export async function updateMember(id: number, _prev: FormState, formData: FormD
 }
 
 /** Hard delete is only for members that never joined a subscription; otherwise archive. */
-export async function deleteMember(id: number, _prev: FormState, _formData: FormData): Promise<FormState> {
+export async function deleteMember(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy người dùng.' };
   if ((await countMembershipsForMember(id)) > 0) {
     return { error: 'Người này đã có subscription/lịch sử. Hãy dùng "Ẩn" thay vì xoá.' };
   }
@@ -44,14 +48,11 @@ export async function deleteMember(id: number, _prev: FormState, _formData: Form
 }
 
 /** Archived members cannot log in and are skipped by reminders; history is kept. */
-export async function setMemberArchived(
-  id: number,
-  archived: boolean,
-  _prev: FormState,
-  _formData: FormData,
-): Promise<FormState> {
+export async function setMemberArchived(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const id = formId(formData);
+  if (!id) return { error: 'Không tìm thấy người dùng.' };
   if (!(await getMember(id))) return { error: 'Không tìm thấy người dùng.' };
-  await getDrizzle().update(members).set({ archived }).where(eq(members.id, id));
+  await getDrizzle().update(members).set({ archived: formData.get('archived') === 'true' }).where(eq(members.id, id));
   redirect(LIST);
 }
