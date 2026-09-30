@@ -66,9 +66,14 @@ export async function addMemberToSubscription(subscriptionId: number, _prev: For
     return { error: 'Người này đã có trong subscription này (có thể đang bị ẩn).' };
   }
 
-  await getDrizzle()
-    .insert(memberships)
-    .values({ memberId, subscriptionId, monthlyShare: parsed.data.monthlyShare, isFamily: parsed.data.isFamily, paidThrough: parsed.data.paidThrough });
+  await getDrizzle().insert(memberships).values({
+    memberId,
+    subscriptionId,
+    currency: parsed.data.currency,
+    monthlyShare: parsed.data.monthlyShare,
+    isFamily: parsed.data.isFamily,
+    paidThrough: parsed.data.paidThrough,
+  });
   redirect(`/admin/subscriptions/${subscriptionId}`);
 }
 

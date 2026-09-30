@@ -19,7 +19,8 @@ function paymentsWithContext() {
       memberName: members.name,
       memberEmail: members.email,
       subscriptionName: subscriptions.name,
-      currency: subscriptions.currency,
+      // Payment amounts are in the membership's own currency, not the subscription's.
+      currency: memberships.currency,
       paidThrough: memberships.paidThrough,
     })
     .from(payments)
@@ -53,7 +54,8 @@ export async function getMyMemberships(memberId: number) {
     .select({
       id: memberships.id,
       subscriptionName: subscriptions.name,
-      currency: subscriptions.currency,
+      // What this member owes, in their own currency (see memberships.currency).
+      currency: memberships.currency,
       billingCycle: subscriptions.billingCycle,
       monthlyShare: memberships.monthlyShare,
       isFamily: memberships.isFamily,

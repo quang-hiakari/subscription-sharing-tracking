@@ -77,7 +77,7 @@ export default async function EditSubscriptionPage({
 
         <Card title="Thêm thành viên">
           <ActionForm action={addMemberToSubscription.bind(null, id)} submitLabel="Thêm thành viên">
-            <AddMemberForm availableMembers={availableMembers} paidThrough={today} billingCycle={billingCycle} />
+            <AddMemberForm availableMembers={availableMembers} paidThrough={today} billingCycle={billingCycle} defaultCurrency={currency} />
           </ActionForm>
         </Card>
       </div>
@@ -112,7 +112,7 @@ export default async function EditSubscriptionPage({
                     <td className={td}>
                       <Link href={`/admin/memberships/${m.id}`} className="font-medium text-blue-700 hover:underline">{m.memberName}</Link>
                     </td>
-                    <td className={td}><Money amount={m.monthlyShare} currency={currency} fx={fx} /></td>
+                    <td className={td}><Money amount={m.monthlyShare} currency={m.currency as Currency} fx={fx} /></td>
                     <td className={td}>{m.paidThrough}</td>
                     <td className={td}>{hidden ? <Badge>Đã ẩn</Badge> : <StatusBadge status={status} daysUntilDue={daysUntilDue} />}</td>
                   </tr>

@@ -41,10 +41,15 @@ beforeEach(() => {
   `);
 });
 
-const add = (memberId: number, subscriptionId: number, paidThrough: string, over: { family?: boolean; share?: number } = {}) => {
+const add = (
+  memberId: number,
+  subscriptionId: number,
+  paidThrough: string,
+  over: { family?: boolean; share?: number; currency?: string } = {},
+) => {
   raw.exec(
-    `INSERT INTO memberships (member_id, subscription_id, monthly_share, is_family, paid_through)
-     VALUES (${memberId}, ${subscriptionId}, ${over.share ?? 300}, ${over.family ? 1 : 0}, '${paidThrough}')`,
+    `INSERT INTO memberships (member_id, subscription_id, currency, monthly_share, is_family, paid_through)
+     VALUES (${memberId}, ${subscriptionId}, '${over.currency ?? 'JPY'}', ${over.share ?? 300}, ${over.family ? 1 : 0}, '${paidThrough}')`,
   );
 };
 
@@ -74,6 +79,13 @@ describe('runReminders', () => {
     expect(await run()).toEqual({ sent: 0, skipped: 0, failed: 0 });
     expect(mails).toHaveLength(0);
     expect(logs()).toHaveLength(0);
+  });
+
+  it("shows the amount in the member's own currency, not the subscription's", async () => {
+    add(1, 1, '2026-09-25', { share: 260_000, currency: 'VND' }); // Youtube itself is billed in JPY
+    await run();
+    expect(mails[0].html).toMatch(/260\.000/);
+    expect(mails[0].html).toContain('₫');
   });
 
   it("uses the subscription's own lead time", async () => {

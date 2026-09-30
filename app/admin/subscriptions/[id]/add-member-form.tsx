@@ -16,10 +16,13 @@ export function AddMemberForm({
   availableMembers,
   paidThrough,
   billingCycle,
+  defaultCurrency,
 }: {
   availableMembers: AvailableMember[];
   paidThrough: string;
   billingCycle: BillingCycle;
+  /** Pre-selects the subscription's own currency; the admin can switch it per member. */
+  defaultCurrency: string;
 }) {
   const [mode, setMode] = useState<'existing' | 'new'>(availableMembers.length > 0 ? 'existing' : 'new');
 
@@ -53,7 +56,7 @@ export function AddMemberForm({
         </>
       )}
 
-      <MembershipTermsFields defaults={{ paidThrough }} billingCycle={billingCycle} />
+      <MembershipTermsFields defaults={{ paidThrough, currency: defaultCurrency }} billingCycle={billingCycle} />
     </>
   );
 }

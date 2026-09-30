@@ -65,7 +65,6 @@ export default async function MePage() {
                 <h3 className="mb-2 text-sm font-medium text-gray-500">Chuyển tiền tới</h3>
                 <PaymentAccountDetails
                   account={{
-                    currency,
                     bankName: item.accountBankName,
                     branchName: item.accountBranchName,
                     accountNumber: item.accountNumber,

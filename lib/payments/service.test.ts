@@ -17,11 +17,11 @@ beforeEach(() => {
     INSERT INTO subscriptions (name, currency, billing_amount, payment_account_id) VALUES ('Youtube', 'JPY', 1200, 1), ('M365', 'JPY', 900, 1);
     INSERT INTO subscriptions (name, currency, billing_cycle, billing_amount, payment_account_id) VALUES ('Netflix', 'JPY', 'yearly', 12000, 1);
     INSERT INTO members (name, email) VALUES ('An', 'an@x.com'), ('Binh', 'binh@x.com');
-    INSERT INTO memberships (member_id, subscription_id, monthly_share, is_family, paid_through) VALUES
-      (1, 1, 300, 0, '2026-10-01'),
-      (2, 1, 300, 0, '2026-09-01'),
-      (1, 2, 0, 1, '2026-09-01'),
-      (1, 3, 12000, 0, '2026-10-01');
+    INSERT INTO memberships (member_id, subscription_id, currency, monthly_share, is_family, paid_through) VALUES
+      (1, 1, 'JPY', 300, 0, '2026-10-01'),
+      (2, 1, 'JPY', 300, 0, '2026-09-01'),
+      (1, 2, 'JPY', 0, 1, '2026-09-01'),
+      (1, 3, 'JPY', 12000, 0, '2026-10-01');
   `);
 });
 

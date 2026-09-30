@@ -66,6 +66,8 @@ const checkbox = z.preprocess((v) => v === 'on' || v === 'true', z.boolean());
 export const membershipCreateSchema = z.object({
   memberId: id('Chọn thành viên'),
   subscriptionId: id('Chọn subscription'),
+  // What this member pays in; need not be the subscription's own billing currency.
+  currency,
   monthlyShare: money('Số tiền mỗi tháng không hợp lệ').min(0, 'Số tiền mỗi tháng không hợp lệ'),
   isFamily: checkbox,
   paidThrough: dateString,
@@ -73,6 +75,7 @@ export const membershipCreateSchema = z.object({
 
 // Member and subscription are fixed once created; only terms can change.
 export const membershipUpdateSchema = membershipCreateSchema.pick({
+  currency: true,
   monthlyShare: true,
   isFamily: true,
   paidThrough: true,

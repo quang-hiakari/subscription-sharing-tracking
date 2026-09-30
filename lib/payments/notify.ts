@@ -14,7 +14,7 @@ export async function notifyPaymentSubmitted(db: D1Database, membershipId: numbe
     const row = await db
       .prepare(
         `SELECT p.months_covered, p.amount, p.note, m.name AS member_name, m.email AS member_email,
-                s.name AS subscription_name, s.currency
+                s.name AS subscription_name, ms.currency
          FROM payments p
          JOIN memberships ms ON ms.id = p.membership_id
          JOIN members m ON m.id = ms.member_id

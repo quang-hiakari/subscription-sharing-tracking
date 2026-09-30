@@ -103,7 +103,10 @@ export const memberships = sqliteTable(
     subscriptionId: integer('subscription_id')
       .notNull()
       .references(() => subscriptions.id),
-    // Per-month amount in the subscription's currency.
+    // Currency this member actually pays in, independent of the subscription's billing currency:
+    // a VND-billed subscription can collect JPY from a member living in Japan.
+    currency: text('currency').notNull(),
+    // Amount per billing period of the subscription's cycle, in this membership's own currency.
     monthlyShare: integer('monthly_share').notNull(),
     isFamily: integer('is_family', { mode: 'boolean' }).notNull().default(false),
     // Paid up to (and including the day before) this date; also the next due date.
@@ -112,6 +115,7 @@ export const memberships = sqliteTable(
   },
   (t) => [
     uniqueIndex('memberships_member_subscription_uq').on(t.memberId, t.subscriptionId),
+    check('memberships_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`),
     check('memberships_share_check', sql`${t.monthlyShare} >= 0`),
   ],
 );

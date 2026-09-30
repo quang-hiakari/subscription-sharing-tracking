@@ -62,7 +62,8 @@ export async function listMemberships(includeArchived = false, subscriptionId?: 
       memberEmail: members.email,
       subscriptionId: subscriptions.id,
       subscriptionName: subscriptions.name,
-      currency: subscriptions.currency,
+      // The share amount and its currency both come from the membership, not the subscription.
+      currency: memberships.currency,
       billingCycle: subscriptions.billingCycle,
       monthlyShare: memberships.monthlyShare,
       isFamily: memberships.isFamily,
@@ -86,7 +87,8 @@ export async function getMembership(id: number) {
       memberEmail: members.email,
       subscriptionId: subscriptions.id,
       subscriptionName: subscriptions.name,
-      currency: subscriptions.currency,
+      // The share amount and its currency both come from the membership, not the subscription.
+      currency: memberships.currency,
       billingCycle: subscriptions.billingCycle,
       monthlyShare: memberships.monthlyShare,
       isFamily: memberships.isFamily,

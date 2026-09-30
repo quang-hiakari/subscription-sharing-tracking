@@ -42,12 +42,14 @@ CREATE TABLE `memberships` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`member_id` integer NOT NULL,
 	`subscription_id` integer NOT NULL,
+	`currency` text NOT NULL,
 	`monthly_share` integer NOT NULL,
 	`is_family` integer DEFAULT false NOT NULL,
 	`paid_through` text NOT NULL,
 	`archived` integer DEFAULT false NOT NULL,
 	FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "memberships_currency_check" CHECK("memberships"."currency" IN ('JPY', 'VND')),
 	CONSTRAINT "memberships_share_check" CHECK("memberships"."monthly_share" >= 0)
 );
 --> statement-breakpoint

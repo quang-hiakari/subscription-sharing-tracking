@@ -1,7 +1,4 @@
-import type { Currency } from '../db-schema';
-
 export interface PaymentAccountInfo {
-  currency: Currency;
   bankName: string;
   branchName: string | null;
   accountNumber: string;

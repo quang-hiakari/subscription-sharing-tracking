@@ -15,7 +15,7 @@ Both the Pages app and the Worker use the same D1 database. Migrations are appli
 | `payment_accounts` | Where to send money. Currency doubles as country: JPY (Japan) allows an optional `branch_name` (banks have one; e-wallets like PayPay don't, and `account_number` is then a phone number); VND (Vietnam) allows an optional QR image path (`qr_image_path`, e.g. `/qr/vcb.png` — a static file added to `public/qr/`, not uploaded) and never has a branch. Both need `bank_name`, `account_number`, `account_holder_name`. |
 | `subscriptions` | Name, currency, `billing_cycle` (monthly/yearly) + `billing_amount` for that cycle, `slot_count` (max sharers, used only to derive reference numbers), account, optional `remind_days_before`. The account's own currency need not match — e.g. a VND subscription can pay into a JPY account; members see both amounts via FX display. |
 | `members` | Name, unique lowercase email, `archived` |
-| `memberships` | Member in a subscription: `monthly_share`, `is_family`, **`paid_through`** (next due date), `archived` |
+| `memberships` | Member in a subscription: `monthly_share` + its own `currency`, `is_family`, **`paid_through`** (next due date), `archived`. The currency is per member and need not be the subscription's: a VND-billed Youtube can collect JPY from a sharer in Japan. |
 | `payments` | Reported or recorded payment: `months_covered`, `amount`, status `pending/approved/rejected`, note, reject reason |
 | `reminder_log` | One row per sent reminder: (membership, due date, kind). Cron kinds are unique; `manual` may repeat |
 | `fx_rates` | Daily JPY→VND rate |

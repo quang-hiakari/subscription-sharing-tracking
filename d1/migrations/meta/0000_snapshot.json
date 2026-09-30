@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e69a1d53-62e9-436d-b284-ac34f00619fe",
+  "id": "4da22f09-ad80-4cf8-843b-4944d6c7506f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -273,6 +273,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "monthly_share": {
           "name": "monthly_share",
           "type": "integer",
@@ -345,6 +352,10 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
+        "memberships_currency_check": {
+          "name": "memberships_currency_check",
+          "value": "\"memberships\".\"currency\" IN ('JPY', 'VND')"
+        },
         "memberships_share_check": {
           "name": "memberships_share_check",
           "value": "\"memberships\".\"monthly_share\" >= 0"

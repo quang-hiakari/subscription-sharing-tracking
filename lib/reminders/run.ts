@@ -48,9 +48,9 @@ interface Candidate {
 
 // The single bind parameter is the start of today (JST) in epoch ms, for `manual_today`.
 const CANDIDATE_SQL = `
-  SELECT ms.id, ms.monthly_share, ms.is_family, ms.paid_through, ms.archived, m.archived AS member_archived,
+  SELECT ms.id, ms.monthly_share, ms.currency, ms.is_family, ms.paid_through, ms.archived, m.archived AS member_archived,
          m.name AS member_name, m.email AS member_email,
-         s.name AS subscription_name, s.currency, s.remind_days_before,
+         s.name AS subscription_name, s.remind_days_before,
          pa.bank_name AS account_bank_name, pa.branch_name AS account_branch_name,
          pa.account_number AS account_number, pa.account_holder_name AS account_holder_name,
          pa.qr_image_path AS account_qr_image_path,
@@ -72,7 +72,6 @@ function reminderMail(c: Candidate, today: string, appUrl: string): Mail {
     dueDate: c.paid_through,
     daysUntilDue: daysBetween(today, c.paid_through),
     accountDetails: formatAccountLines({
-      currency: c.currency,
       bankName: c.account_bank_name,
       branchName: c.account_branch_name,
       accountNumber: c.account_number,
