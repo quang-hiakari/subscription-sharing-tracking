@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { MAX_MONTHS_PER_PAYMENT } from '@/lib/payments/service';
 
 type Choice = 'keep' | '6' | '12' | 'custom';
+const MONTH_OPTIONS = Array.from({ length: MAX_MONTHS_PER_PAYMENT }, (_, i) => i + 1);
 
 /**
  * How many periods to credit when approving a pending payment: keep what the member reported,
@@ -37,15 +39,16 @@ export function ApproveMonthsChoice({ reportedMonths }: { reportedMonths: number
           onChange={(e) => setChoice(e.target.checked ? 'custom' : 'keep')}
         />
         Số tháng khác:
-        <input
-          type="number"
+        <select
           name="customMonths"
-          min={1}
-          max={36}
-          step={1}
+          defaultValue={1}
           disabled={choice !== 'custom'}
-          className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-100"
-        />
+          className="rounded-md border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-100"
+        >
+          {MONTH_OPTIONS.map((n) => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </select>
       </label>
     </fieldset>
   );

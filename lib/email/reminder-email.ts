@@ -20,10 +20,10 @@ export interface ReminderEmailInput {
   bulkReference: BulkPeriodsReference | null;
 }
 
-function subjectFor(subscription: string, daysUntilDue: number): string {
-  if (daysUntilDue > 0) return `Sắp đến hạn thanh toán ${subscription}: còn ${daysUntilDue} ngày`;
-  if (daysUntilDue === 0) return `Hôm nay đến hạn thanh toán ${subscription}`;
-  return `Quá hạn thanh toán ${subscription} ${-daysUntilDue} ngày`;
+// A single gentle nudge regardless of how close/overdue it is — the day-by-day detail
+// (headlineFor, below) belongs in the body, not the subject line.
+function subjectFor(subscription: string): string {
+  return `Tới hạn thanh toán tiền cho ${subscription} rồi bạn ơi`;
 }
 
 function headlineFor(daysUntilDue: number): string {
@@ -51,5 +51,5 @@ export function buildReminderEmail(i: ReminderEmailInput): { subject: string; ht
     <p style="margin:16px 0 0;font-size:13px;color:#666">Đã chuyển rồi? Đăng nhập, chọn "Tôi đã chuyển tiền" để báo cho chủ nhóm.</p>
     ${emailButton(`${i.appUrl}/login`, 'Mở trang thanh toán')}`);
 
-  return { subject: subjectFor(i.subscriptionName, i.daysUntilDue), html };
+  return { subject: subjectFor(i.subscriptionName), html };
 }

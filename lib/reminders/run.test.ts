@@ -60,7 +60,7 @@ describe('runReminders', () => {
     expect(await run()).toEqual({ sent: 1, skipped: 0, failed: 0 });
     expect(mails).toHaveLength(1);
     expect(mails[0].to).toBe('an@x.com');
-    expect(mails[0].subject).toBe('Sắp đến hạn thanh toán Youtube: còn 4 ngày');
+    expect(mails[0].subject).toBe('Tới hạn thanh toán tiền cho Youtube rồi bạn ơi');
     expect(mails[0].html).toContain('1234567');
     expect(mails[0].html).toContain('Yucho Bank');
     expect(mails[0].html).toContain(`${APP}/login`);
@@ -205,7 +205,7 @@ describe('runReminders', () => {
     add(1, 1, '2026-09-22');
     // 2026-09-20T16:00Z is already 09-21 01:00 JST: 1 day left -> t-minus.
     await run(new Date('2026-09-20T16:00:00Z'));
-    expect(mails[0].subject).toBe('Sắp đến hạn thanh toán Youtube: còn 1 ngày');
+    expect(mails[0].html).toContain('Còn 1 ngày đến hạn thanh toán.');
   });
 });
 
@@ -215,7 +215,8 @@ describe('sendManualReminder', () => {
     expect(await manual(1)).toEqual({ ok: true });
     expect(await manual(1)).toEqual({ ok: true });
     expect(mails).toHaveLength(2);
-    expect(mails[0].subject).toBe('Quá hạn thanh toán Youtube 2 ngày');
+    expect(mails[0].subject).toBe('Tới hạn thanh toán tiền cho Youtube rồi bạn ơi');
+    expect(mails[0].html).toContain('Đã quá hạn thanh toán 2 ngày.');
     expect(logs().map((l) => l.kind)).toEqual(['manual', 'manual']);
   });
 

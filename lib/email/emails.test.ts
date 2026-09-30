@@ -15,18 +15,18 @@ const base = {
 };
 
 describe('buildReminderEmail', () => {
-  it('upcoming: countdown in subject, due date, amount, account and login link', () => {
+  it('upcoming: a gentle fixed subject, due date, amount, account and login link in the body', () => {
     const { subject, html } = buildReminderEmail({ ...base, daysUntilDue: 5 });
-    expect(subject).toBe('Sắp đến hạn thanh toán Youtube: còn 5 ngày');
+    expect(subject).toBe('Tới hạn thanh toán tiền cho Youtube rồi bạn ơi');
     expect(html).toContain('2026-10-01');
     expect(html).toContain('300');
     expect(html).toContain('Ngân hàng: Yucho<br>Số tài khoản: 1234567<br>Chủ tài khoản: Nguyen A');
     expect(html).toContain('https://app.example/login');
   });
 
-  it('due today and overdue subjects', () => {
-    expect(buildReminderEmail({ ...base, daysUntilDue: 0 }).subject).toBe('Hôm nay đến hạn thanh toán Youtube');
-    expect(buildReminderEmail({ ...base, daysUntilDue: -6 }).subject).toBe('Quá hạn thanh toán Youtube 6 ngày');
+  it('keeps the same gentle subject regardless of timing; day-by-day detail lives in the body', () => {
+    expect(buildReminderEmail({ ...base, daysUntilDue: 0 }).subject).toBe('Tới hạn thanh toán tiền cho Youtube rồi bạn ơi');
+    expect(buildReminderEmail({ ...base, daysUntilDue: -6 }).subject).toBe('Tới hạn thanh toán tiền cho Youtube rồi bạn ơi');
     expect(buildReminderEmail({ ...base, daysUntilDue: -6 }).html).toContain('Đã quá hạn thanh toán 6 ngày.');
   });
 
