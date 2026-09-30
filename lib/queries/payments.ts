@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { getDrizzle } from '@/lib/db';
-import { members, memberships, paymentAccounts, payments, subscriptions } from '@/lib/db-schema';
+import { members, memberships, paymentAccounts, payments, subscriptionPaymentAccounts, subscriptions } from '@/lib/db-schema';
 
 // Payment reads for the admin queue and the member dashboard.
 
@@ -45,14 +45,16 @@ export async function listPaymentsForMembership(membershipId: number) {
 }
 
 /**
- * A member's active memberships with account details and payment history.
- * Same "active" rule as the admin side: membership and member both not archived.
+ * A member's active memberships with their subscription's payment accounts (a subscription can
+ * have more than one) and payment history. Same "active" rule as the admin side: membership and
+ * member both not archived.
  */
 export async function getMyMemberships(memberId: number) {
   const db = getDrizzle();
   const rows = await db
     .select({
       id: memberships.id,
+      subscriptionId: subscriptions.id,
       subscriptionName: subscriptions.name,
       // What this member owes, in their own currency (see memberships.currency).
       currency: memberships.currency,
@@ -61,24 +63,38 @@ export async function getMyMemberships(memberId: number) {
       isFamily: memberships.isFamily,
       paidThrough: memberships.paidThrough,
       remindDaysBefore: subscriptions.remindDaysBefore,
-      accountBankName: paymentAccounts.bankName,
-      accountBranchName: paymentAccounts.branchName,
-      accountNumber: paymentAccounts.accountNumber,
-      accountHolderName: paymentAccounts.accountHolderName,
-      accountQrImagePath: paymentAccounts.qrImagePath,
     })
     .from(memberships)
     .innerJoin(members, eq(memberships.memberId, members.id))
     .innerJoin(subscriptions, eq(memberships.subscriptionId, subscriptions.id))
-    .innerJoin(paymentAccounts, eq(subscriptions.paymentAccountId, paymentAccounts.id))
     .where(and(eq(memberships.memberId, memberId), eq(memberships.archived, false), eq(members.archived, false)))
     .orderBy(subscriptions.name);
   if (rows.length === 0) return [];
 
-  const history = await db
-    .select()
-    .from(payments)
-    .where(inArray(payments.membershipId, rows.map((r) => r.id)))
-    .orderBy(desc(payments.createdAt));
-  return rows.map((row) => ({ ...row, payments: history.filter((p) => p.membershipId === row.id) }));
+  const [accountLinks, history] = await Promise.all([
+    db
+      .select({
+        subscriptionId: subscriptionPaymentAccounts.subscriptionId,
+        currency: paymentAccounts.currency,
+        bankName: paymentAccounts.bankName,
+        branchName: paymentAccounts.branchName,
+        accountNumber: paymentAccounts.accountNumber,
+        accountHolderName: paymentAccounts.accountHolderName,
+        qrImagePath: paymentAccounts.qrImagePath,
+      })
+      .from(subscriptionPaymentAccounts)
+      .innerJoin(paymentAccounts, eq(subscriptionPaymentAccounts.paymentAccountId, paymentAccounts.id))
+      .where(inArray(subscriptionPaymentAccounts.subscriptionId, rows.map((r) => r.subscriptionId))),
+    db
+      .select()
+      .from(payments)
+      .where(inArray(payments.membershipId, rows.map((r) => r.id)))
+      .orderBy(desc(payments.createdAt)),
+  ]);
+
+  return rows.map((row) => ({
+    ...row,
+    accounts: accountLinks.filter((a) => a.subscriptionId === row.subscriptionId),
+    payments: history.filter((p) => p.membershipId === row.id),
+  }));
 }

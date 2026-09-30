@@ -1,6 +1,6 @@
 import { and, count, desc, eq, ne } from 'drizzle-orm';
 import { getDrizzle } from '@/lib/db';
-import { members, memberships, paymentAccounts, payments, reminderLog, subscriptions } from '@/lib/db-schema';
+import { members, memberships, paymentAccounts, payments, reminderLog, subscriptionPaymentAccounts, subscriptions } from '@/lib/db-schema';
 import { membershipStatus } from './membership-status';
 
 // Read helpers for the admin screens. Mutations live in each screen's actions.ts.
@@ -14,8 +14,27 @@ export async function getAccount(id: number) {
   return row ?? null;
 }
 
-export async function listSubscriptions() {
+/** A subscription's own payment accounts (it can have more than one), in a stable order. */
+export async function listAccountsForSubscription(subscriptionId: number) {
   return getDrizzle()
+    .select({
+      id: paymentAccounts.id,
+      currency: paymentAccounts.currency,
+      label: paymentAccounts.label,
+      bankName: paymentAccounts.bankName,
+      branchName: paymentAccounts.branchName,
+      accountNumber: paymentAccounts.accountNumber,
+      accountHolderName: paymentAccounts.accountHolderName,
+      qrImagePath: paymentAccounts.qrImagePath,
+    })
+    .from(subscriptionPaymentAccounts)
+    .innerJoin(paymentAccounts, eq(subscriptionPaymentAccounts.paymentAccountId, paymentAccounts.id))
+    .where(eq(subscriptionPaymentAccounts.subscriptionId, subscriptionId))
+    .orderBy(paymentAccounts.currency, paymentAccounts.label);
+}
+
+export async function listSubscriptions() {
+  const subs = await getDrizzle()
     .select({
       id: subscriptions.id,
       name: subscriptions.name,
@@ -24,11 +43,22 @@ export async function listSubscriptions() {
       billingAmount: subscriptions.billingAmount,
       slotCount: subscriptions.slotCount,
       remindDaysBefore: subscriptions.remindDaysBefore,
-      accountLabel: paymentAccounts.label,
     })
     .from(subscriptions)
-    .innerJoin(paymentAccounts, eq(subscriptions.paymentAccountId, paymentAccounts.id))
     .orderBy(subscriptions.name);
+
+  const links = await getDrizzle()
+    .select({ subscriptionId: subscriptionPaymentAccounts.subscriptionId, label: paymentAccounts.label })
+    .from(subscriptionPaymentAccounts)
+    .innerJoin(paymentAccounts, eq(subscriptionPaymentAccounts.paymentAccountId, paymentAccounts.id));
+  const labelsBySubscription = new Map<number, string[]>();
+  for (const l of links) {
+    const labels = labelsBySubscription.get(l.subscriptionId) ?? [];
+    labels.push(l.label);
+    labelsBySubscription.set(l.subscriptionId, labels);
+  }
+
+  return subs.map((s) => ({ ...s, accountLabels: (labelsBySubscription.get(s.id) ?? []).join(', ') }));
 }
 
 export async function getSubscription(id: number) {
@@ -127,7 +157,10 @@ export async function countPendingPayments(): Promise<number> {
 // Reference counts used by delete guards.
 
 export async function countSubscriptionsForAccount(accountId: number): Promise<number> {
-  const [row] = await getDrizzle().select({ n: count() }).from(subscriptions).where(eq(subscriptions.paymentAccountId, accountId));
+  const [row] = await getDrizzle()
+    .select({ n: count() })
+    .from(subscriptionPaymentAccounts)
+    .where(eq(subscriptionPaymentAccounts.paymentAccountId, accountId));
   return row.n;
 }
 

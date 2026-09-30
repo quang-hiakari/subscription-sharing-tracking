@@ -69,9 +69,6 @@ export const subscriptions = sqliteTable(
     billingAmount: integer('billing_amount').notNull(),
     // Max number of people sharing; used only for the reference calculation above.
     slotCount: integer('slot_count').notNull().default(1),
-    paymentAccountId: integer('payment_account_id')
-      .notNull()
-      .references(() => paymentAccounts.id),
     // Days before due to send the first reminder; NULL means the app default (7).
     remindDaysBefore: integer('remind_days_before'),
   },
@@ -82,6 +79,21 @@ export const subscriptions = sqliteTable(
     check('subscriptions_slot_count_check', sql`${t.slotCount} > 0`),
     check('subscriptions_remind_check', sql`${t.remindDaysBefore} IS NULL OR ${t.remindDaysBefore} >= 0`),
   ],
+);
+
+// A subscription can be paid into more than one account (e.g. a JPY e-wallet and a VND bank
+// account), so members abroad and at home can each pay in a currency that's convenient for them.
+export const subscriptionPaymentAccounts = sqliteTable(
+  'subscription_payment_accounts',
+  {
+    subscriptionId: integer('subscription_id')
+      .notNull()
+      .references(() => subscriptions.id),
+    paymentAccountId: integer('payment_account_id')
+      .notNull()
+      .references(() => paymentAccounts.id),
+  },
+  (t) => [primaryKey({ columns: [t.subscriptionId, t.paymentAccountId] })],
 );
 
 export const members = sqliteTable('members', {

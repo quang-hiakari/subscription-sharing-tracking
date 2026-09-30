@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestD1 } from '../payments/sqlite-d1';
-import { convertToOther, otherCurrency, sumByCurrency, totalInVnd } from './convert';
+import { amountIn, convertToOther, otherCurrency, sumByCurrency, totalInVnd } from './convert';
 import { fetchJpyToVnd, latestRate, refreshFxRate } from './rates';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -29,6 +29,24 @@ describe('convert', () => {
     expect(sums).toEqual({ JPY: 500, VND: 100_000 });
     expect(totalInVnd(sums, 165)).toBe(182_500);
     expect(sumByCurrency([])).toEqual({ JPY: 0, VND: 0 });
+  });
+});
+
+describe('amountIn', () => {
+  const fx = { rate: 165.4, date: '2026-09-30' };
+
+  it('returns the amount unchanged when the currencies already match', () => {
+    expect(amountIn(300, 'JPY', 'JPY', null)).toBe(300); // no rate needed at all
+    expect(amountIn(300, 'JPY', 'JPY', fx)).toBe(300);
+  });
+
+  it('converts when the currencies differ and a rate is known', () => {
+    expect(amountIn(300, 'JPY', 'VND', fx)).toBe(49620);
+    expect(amountIn(100_000, 'VND', 'JPY', fx)).toBe(605);
+  });
+
+  it('is null when a conversion is needed but no rate is known yet', () => {
+    expect(amountIn(300, 'JPY', 'VND', null)).toBeNull();
   });
 });
 

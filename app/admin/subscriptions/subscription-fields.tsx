@@ -14,7 +14,7 @@ interface Defaults {
   billingCycle?: string;
   billingAmount?: number;
   slotCount?: number;
-  paymentAccountId?: number;
+  paymentAccountIds?: number[];
   remindDaysBefore?: number | null;
 }
 
@@ -65,13 +65,25 @@ export function SubscriptionFields({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField
-          label="Tài khoản nhận tiền"
-          name="paymentAccountId"
-          options={accounts.map((a) => ({ value: a.id, label: `${a.label} (${a.currency})` }))}
-          defaultValue={defaults.paymentAccountId}
-          hint="Không cần cùng loại tiền với subscription — thành viên vẫn thấy quy đổi (≈)."
-        />
+        <fieldset className="space-y-1.5">
+          <legend className="text-sm font-medium">Tài khoản nhận tiền</legend>
+          <div className="space-y-1 rounded-md border border-gray-300 bg-white p-2">
+            {accounts.map((a) => (
+              <label key={a.id} className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="checkbox"
+                  name="paymentAccountIds"
+                  value={a.id}
+                  defaultChecked={defaults.paymentAccountIds?.includes(a.id) ?? false}
+                />
+                {a.label} ({a.currency})
+              </label>
+            ))}
+          </div>
+          <span className="block text-xs text-gray-500">
+            Chọn 1 hoặc nhiều tài khoản. Không cần cùng loại tiền với subscription — mỗi tài khoản hiện số tiền quy đổi riêng cho thành viên.
+          </span>
+        </fieldset>
         <Field
           label="Nhắc trước hạn (ngày)"
           name="remindDaysBefore"

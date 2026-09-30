@@ -9,7 +9,7 @@ import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
 import { computeSubscriptionReference } from '@/lib/format/subscription-reference';
 import { addMemberToSubscription } from '@/app/admin/memberships/actions';
-import { getSubscription, listAccounts, listAvailableMembersForSubscription, listMemberships } from '@/lib/queries/admin';
+import { getSubscription, listAccounts, listAccountsForSubscription, listAvailableMembersForSubscription, listMemberships } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
 import { membershipStatus } from '@/lib/queries/membership-status';
 import { deleteSubscription, updateSubscription } from '../actions';
@@ -31,8 +31,9 @@ export default async function EditSubscriptionPage({
   if (!subscription) notFound();
 
   const showArchived = (await searchParams).archived === '1';
-  const [accounts, members, availableMembers, fx] = await Promise.all([
+  const [accounts, linkedAccounts, members, availableMembers, fx] = await Promise.all([
     listAccounts(),
+    listAccountsForSubscription(id),
     listMemberships(showArchived, id),
     listAvailableMembersForSubscription(id),
     getFx(),
@@ -50,7 +51,7 @@ export default async function EditSubscriptionPage({
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Thông tin subscription">
           <ActionForm action={updateSubscription.bind(null, id)} submitLabel="Lưu">
-            <SubscriptionFields accounts={accounts} defaults={subscription} />
+            <SubscriptionFields accounts={accounts} defaults={{ ...subscription, paymentAccountIds: linkedAccounts.map((a) => a.id) }} />
           </ActionForm>
           <div className="mt-4 grid grid-cols-2 gap-3 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
             <div>

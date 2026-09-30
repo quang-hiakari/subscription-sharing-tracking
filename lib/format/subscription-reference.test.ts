@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeSubscriptionReference } from './subscription-reference';
+import { computeBulkPeriodsReference, computeSubscriptionReference } from './subscription-reference';
 
 describe('computeSubscriptionReference', () => {
   it('derives monthly totals from a monthly billing amount', () => {
@@ -35,5 +35,15 @@ describe('computeSubscriptionReference', () => {
       perPersonPerMonth: 900,
       perPersonPerYear: 10_800,
     });
+  });
+});
+
+describe('computeBulkPeriodsReference', () => {
+  it('is a plain multiple of the per-period share, no rounding needed', () => {
+    expect(computeBulkPeriodsReference(300)).toEqual({ sixPeriods: 1800, twelvePeriods: 3600 });
+  });
+
+  it('handles a zero share', () => {
+    expect(computeBulkPeriodsReference(0)).toEqual({ sixPeriods: 0, twelvePeriods: 0 });
   });
 });

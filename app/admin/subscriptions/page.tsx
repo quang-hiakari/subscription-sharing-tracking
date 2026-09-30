@@ -38,7 +38,7 @@ export default async function SubscriptionsPage() {
                   <Money amount={s.billingAmount} currency={s.currency as Currency} fx={fx} />
                   <span className="text-gray-500"> /{s.billingCycle === 'yearly' ? 'năm' : 'tháng'}</span>
                 </td>
-                <td className={td}>{s.accountLabel}</td>
+                <td className={td}>{s.accountLabels}</td>
                 <td className={td}>{s.remindDaysBefore ?? DEFAULT_REMIND_DAYS_BEFORE} ngày</td>
               </tr>
             ))}

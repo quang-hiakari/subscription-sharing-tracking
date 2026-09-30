@@ -34,8 +34,9 @@ beforeEach(() => {
   raw.exec(`
     INSERT INTO payment_accounts (currency, label, bank_name, branch_name, account_number, account_holder_name)
       VALUES ('JPY', 'Yucho', 'Yucho Bank', 'Main', '1234567', 'NGUYEN A');
-    INSERT INTO subscriptions (name, currency, billing_amount, payment_account_id, remind_days_before) VALUES
-      ('Youtube', 'JPY', 1200, 1, NULL), ('M365', 'JPY', 900, 1, 14);
+    INSERT INTO subscriptions (name, currency, billing_amount, remind_days_before) VALUES
+      ('Youtube', 'JPY', 1200, NULL), ('M365', 'JPY', 900, 14);
+    INSERT INTO subscription_payment_accounts (subscription_id, payment_account_id) VALUES (1, 1), (2, 1);
     INSERT INTO members (name, email) VALUES
       ('An', 'an@x.com'), ('Binh', 'binh@x.com'), ('Chi', 'chi@x.com'), ('Dung', 'dung@x.com'), ('Em', 'em@x.com');
   `);
@@ -86,6 +87,34 @@ describe('runReminders', () => {
     await run();
     expect(mails[0].html).toMatch(/260\.000/);
     expect(mails[0].html).toContain('₫');
+  });
+
+  it('lists every payment account for the subscription, each converted to its own currency', async () => {
+    raw.exec(`
+      INSERT INTO payment_accounts (currency, label, bank_name, account_number, account_holder_name)
+        VALUES ('VND', 'VCB', 'Vietcombank', '0123456789', 'NGUYEN A');
+      INSERT INTO subscription_payment_accounts (subscription_id, payment_account_id) VALUES (1, 2);
+      INSERT INTO fx_rates (date, base, quote, rate) VALUES ('2026-09-21', 'JPY', 'VND', 150);
+    `);
+    add(1, 1, '2026-09-25', { share: 300 }); // JPY member share, subscription 1 has a JPY and a VND account
+    await run();
+    expect(mails[0].html).toContain('Yucho Bank'); // native JPY account: amount unchanged
+    expect(mails[0].html).toContain('Vietcombank'); // VND account: converted at the stored rate
+    expect(mails[0].html).toMatch(/45,?000|45\.000/); // 300 JPY * 150 = 45,000 VND
+  });
+
+  it('shows a 6/12-month upfront reference only for a monthly-cycle subscription', async () => {
+    raw.exec(`
+      INSERT INTO subscriptions (name, currency, billing_cycle, billing_amount) VALUES ('Netflix', 'JPY', 'yearly', 12000);
+      INSERT INTO subscription_payment_accounts (subscription_id, payment_account_id) VALUES (3, 1);
+    `);
+    add(1, 1, '2026-09-25', { share: 300 }); // monthly subscription
+    add(2, 3, '2026-09-25', { share: 12000 }); // yearly subscription
+    await run();
+    const [monthlyMail, yearlyMail] = mails;
+    expect(monthlyMail.html).toContain('Trả trước 6 / 12 tháng');
+    expect(monthlyMail.html).toMatch(/1,?800|1\.800/); // 6 x 300
+    expect(yearlyMail.html).not.toContain('Trả trước 6 / 12 tháng');
   });
 
   it("uses the subscription's own lead time", async () => {

@@ -11,6 +11,10 @@ const id = (msg: string) => z.coerce.number({ invalid_type_error: msg }).int(msg
 const money = (msg: string) => z.coerce.number({ invalid_type_error: msg }).int(msg);
 // Missing and blank both mean "not provided".
 const emptyToNull = (v: unknown) => (v == null || (typeof v === 'string' && v.trim() === '') ? null : v);
+// A group of same-named checkboxes: 0 checked -> field absent, 1 -> a lone string, 2+ -> an
+// array (see parseForm's use of FormData.getAll). Normalizes all three to an array of ids.
+const idList = (msg: string) =>
+  z.preprocess((v) => (v == null ? [] : Array.isArray(v) ? v : [v]), z.array(id(msg)).min(1, msg));
 
 // Bank fields differ by country: currency doubles as the country (JPY = Japan, VND = Vietnam).
 // qrImagePath points at a static file under public/ (added to the repo, not uploaded here).
@@ -47,7 +51,7 @@ export const subscriptionSchema = z.object({
   billingCycle,
   billingAmount: money('Số tiền không hợp lệ').positive('Số tiền phải lớn hơn 0'),
   slotCount: id('Số slot không hợp lệ'),
-  paymentAccountId: id('Chọn tài khoản nhận tiền'),
+  paymentAccountIds: idList('Chọn ít nhất một tài khoản nhận tiền'),
   // Empty input means "use the default lead time".
   remindDaysBefore: z.preprocess(
     (v) => (v === '' || v == null ? null : v),
@@ -95,8 +99,19 @@ export const addMemberToSubscriptionSchema = z.discriminatedUnion('mode', [
 export type ParseResult<T> = { data: T } | { error: string };
 
 /** Parses FormData with a schema; returns the first user-facing error message. */
+/** Like Object.fromEntries(formData), but a repeated key (e.g. a group of same-named checkboxes)
+ * becomes an array instead of losing every value but the last. */
+function formDataToObject(formData: FormData): Record<string, unknown> {
+  const obj: Record<string, unknown> = {};
+  for (const key of new Set(formData.keys())) {
+    const values = formData.getAll(key);
+    obj[key] = values.length > 1 ? values : values[0];
+  }
+  return obj;
+}
+
 export function parseForm<S extends z.ZodTypeAny>(schema: S, formData: FormData): ParseResult<z.output<S>> {
-  const parsed = schema.safeParse(Object.fromEntries(formData));
+  const parsed = schema.safeParse(formDataToObject(formData));
   if (parsed.success) return { data: parsed.data };
   return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
 }

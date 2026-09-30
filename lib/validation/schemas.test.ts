@@ -11,9 +11,12 @@ import {
   subscriptionSchema,
 } from './schemas';
 
-function fd(entries: Record<string, string>): FormData {
+function fd(entries: Record<string, string | string[]>): FormData {
   const f = new FormData();
-  for (const [k, v] of Object.entries(entries)) f.set(k, v);
+  for (const [k, v] of Object.entries(entries)) {
+    if (Array.isArray(v)) for (const item of v) f.append(k, item);
+    else f.set(k, v);
+  }
   return f;
 }
 
@@ -68,11 +71,11 @@ describe('subscriptionSchema', () => {
     billingCycle: 'monthly',
     billingAmount: '300',
     slotCount: '4',
-    paymentAccountId: '1',
+    paymentAccountIds: ['1', '2'],
     remindDaysBefore: '',
   };
 
-  it('coerces numbers and maps empty lead time to null', () => {
+  it('coerces numbers, maps empty lead time to null, and always arrays payment account ids', () => {
     expect(parseForm(subscriptionSchema, fd(valid))).toEqual({
       data: {
         name: 'Youtube',
@@ -80,10 +83,12 @@ describe('subscriptionSchema', () => {
         billingCycle: 'monthly',
         billingAmount: 300,
         slotCount: 4,
-        paymentAccountId: 1,
+        paymentAccountIds: [1, 2],
         remindDaysBefore: null,
       },
     });
+    // A single checked checkbox arrives as a lone value, not an array — still normalized to one.
+    expect(parseForm(subscriptionSchema, fd({ ...valid, paymentAccountIds: ['1'] }))).toMatchObject({ data: { paymentAccountIds: [1] } });
   });
 
   it('accepts a yearly billing amount as-is (no monthly derivation)', () => {
@@ -111,8 +116,8 @@ describe('subscriptionSchema', () => {
     expect('error' in parseForm(subscriptionSchema, fd({ ...valid, slotCount: '0' }))).toBe(true);
   });
 
-  it('requires a payment account', () => {
-    expect(parseForm(subscriptionSchema, fd({ ...valid, paymentAccountId: '' }))).toEqual({ error: 'Chọn tài khoản nhận tiền' });
+  it('requires at least one payment account', () => {
+    expect(parseForm(subscriptionSchema, fd({ ...valid, paymentAccountIds: [] }))).toEqual({ error: 'Chọn ít nhất một tài khoản nhận tiền' });
   });
 });
 

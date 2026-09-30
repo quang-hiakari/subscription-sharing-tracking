@@ -109,6 +109,14 @@ CREATE TABLE `session` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `session_token_unique` ON `session` (`token`);--> statement-breakpoint
+CREATE TABLE `subscription_payment_accounts` (
+	`subscription_id` integer NOT NULL,
+	`payment_account_id` integer NOT NULL,
+	PRIMARY KEY(`subscription_id`, `payment_account_id`),
+	FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`payment_account_id`) REFERENCES `payment_accounts`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
 CREATE TABLE `subscriptions` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
@@ -116,9 +124,7 @@ CREATE TABLE `subscriptions` (
 	`billing_cycle` text DEFAULT 'monthly' NOT NULL,
 	`billing_amount` integer NOT NULL,
 	`slot_count` integer DEFAULT 1 NOT NULL,
-	`payment_account_id` integer NOT NULL,
 	`remind_days_before` integer,
-	FOREIGN KEY (`payment_account_id`) REFERENCES `payment_accounts`(`id`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "subscriptions_currency_check" CHECK("subscriptions"."currency" IN ('JPY', 'VND')),
 	CONSTRAINT "subscriptions_billing_cycle_check" CHECK("subscriptions"."billing_cycle" IN ('monthly', 'yearly')),
 	CONSTRAINT "subscriptions_billing_amount_check" CHECK("subscriptions"."billing_amount" > 0),

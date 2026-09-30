@@ -10,6 +10,7 @@ const base = {
   dueDate: '2026-10-01',
   accountDetails: 'Ngân hàng: Yucho\nSố tài khoản: 1234567\nChủ tài khoản: Nguyen A',
   appUrl: 'https://app.example',
+  bulkReference: null,
 };
 
 describe('buildReminderEmail', () => {
@@ -26,6 +27,16 @@ describe('buildReminderEmail', () => {
     expect(buildReminderEmail({ ...base, daysUntilDue: 0 }).subject).toBe('Hôm nay đến hạn thanh toán Youtube');
     expect(buildReminderEmail({ ...base, daysUntilDue: -6 }).subject).toBe('Quá hạn thanh toán Youtube 6 ngày');
     expect(buildReminderEmail({ ...base, daysUntilDue: -6 }).html).toContain('Đã quá hạn thanh toán 6 ngày.');
+  });
+
+  it('shows a 6/12-month upfront reference only when given one', () => {
+    const withRef = buildReminderEmail({ ...base, daysUntilDue: 5, bulkReference: { sixPeriods: 1800, twelvePeriods: 3600 } });
+    expect(withRef.html).toContain('Trả trước 6 / 12 tháng');
+    expect(withRef.html).toContain('1,800');
+    expect(withRef.html).toContain('3,600');
+
+    const withoutRef = buildReminderEmail({ ...base, daysUntilDue: 5 });
+    expect(withoutRef.html).not.toContain('Trả trước 6 / 12 tháng');
   });
 
   it('escapes user-controlled text', () => {

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4da22f09-ad80-4cf8-843b-4944d6c7506f",
+  "id": "5a374c7b-574b-48f1-b773-12b62ebcd41c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -717,6 +717,65 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "subscription_payment_accounts": {
+      "name": "subscription_payment_accounts",
+      "columns": {
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payment_account_id": {
+          "name": "payment_account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "subscription_payment_accounts_subscription_id_subscriptions_id_fk": {
+          "name": "subscription_payment_accounts_subscription_id_subscriptions_id_fk",
+          "tableFrom": "subscription_payment_accounts",
+          "tableTo": "subscriptions",
+          "columnsFrom": [
+            "subscription_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "subscription_payment_accounts_payment_account_id_payment_accounts_id_fk": {
+          "name": "subscription_payment_accounts_payment_account_id_payment_accounts_id_fk",
+          "tableFrom": "subscription_payment_accounts",
+          "tableTo": "payment_accounts",
+          "columnsFrom": [
+            "payment_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "subscription_payment_accounts_subscription_id_payment_account_id_pk": {
+          "columns": [
+            "subscription_id",
+            "payment_account_id"
+          ],
+          "name": "subscription_payment_accounts_subscription_id_payment_account_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "subscriptions": {
       "name": "subscriptions",
       "columns": {
@@ -764,13 +823,6 @@
           "autoincrement": false,
           "default": 1
         },
-        "payment_account_id": {
-          "name": "payment_account_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "remind_days_before": {
           "name": "remind_days_before",
           "type": "integer",
@@ -780,21 +832,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "subscriptions_payment_account_id_payment_accounts_id_fk": {
-          "name": "subscriptions_payment_account_id_payment_accounts_id_fk",
-          "tableFrom": "subscriptions",
-          "tableTo": "payment_accounts",
-          "columnsFrom": [
-            "payment_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {

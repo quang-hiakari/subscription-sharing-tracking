@@ -27,3 +27,17 @@ export function computeSubscriptionReference(
     perPersonPerYear: Math.round(totalPerYear / slotCount),
   };
 }
+
+export interface BulkPeriodsReference {
+  sixPeriods: number;
+  twelvePeriods: number;
+}
+
+/**
+ * What a member would pay upfront for 6 or 12 periods, from their own per-period share — a plain
+ * multiple, no currency conversion. Only meaningful for a monthly-cycle subscription (someone
+ * paying "12 periods" of a yearly one would just be paying 12 years, not a useful reference).
+ */
+export function computeBulkPeriodsReference(periodShare: number): BulkPeriodsReference {
+  return { sixPeriods: periodShare * 6, twelvePeriods: periodShare * 12 };
+}
