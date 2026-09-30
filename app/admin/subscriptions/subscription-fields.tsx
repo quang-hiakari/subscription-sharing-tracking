@@ -52,15 +52,15 @@ export function SubscriptionFields({
           defaultValue={defaults.billingAmount}
         />
         <Field
-          label="Số slot chia sẻ"
+          label="Số slot chia sẻ thêm"
           name="slotCount"
           type="number"
           inputMode="numeric"
-          min={1}
+          min={0}
           step={1}
           required
-          defaultValue={defaults.slotCount ?? 1}
-          hint="Để tính số tiền tham khảo mỗi người."
+          defaultValue={defaults.slotCount ?? 0}
+          hint="Không tính bạn. VD: 3 slot = bạn + 3 người khác."
         />
       </div>
 

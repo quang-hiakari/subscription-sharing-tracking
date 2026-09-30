@@ -70,7 +70,7 @@ export default async function EditSubscriptionPage({
               <Money amount={reference.perPersonPerYear} currency={currency} fx={fx} />
             </div>
             <p className="col-span-2 text-xs text-gray-500">
-              Số tham khảo tính từ tổng tiền và số slot ({subscription.slotCount} người) — dùng để tự set số tiền khi thêm thành viên bên dưới.
+              Số tham khảo tính từ tổng tiền chia cho {subscription.slotCount + 1} người (bạn + {subscription.slotCount} slot chia sẻ thêm) — dùng để tự set số tiền khi thêm thành viên bên dưới.
             </p>
           </div>
         </Card>

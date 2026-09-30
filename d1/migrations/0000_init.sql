@@ -123,12 +123,12 @@ CREATE TABLE `subscriptions` (
 	`currency` text NOT NULL,
 	`billing_cycle` text DEFAULT 'monthly' NOT NULL,
 	`billing_amount` integer NOT NULL,
-	`slot_count` integer DEFAULT 1 NOT NULL,
+	`slot_count` integer DEFAULT 0 NOT NULL,
 	`remind_days_before` integer,
 	CONSTRAINT "subscriptions_currency_check" CHECK("subscriptions"."currency" IN ('JPY', 'VND')),
 	CONSTRAINT "subscriptions_billing_cycle_check" CHECK("subscriptions"."billing_cycle" IN ('monthly', 'yearly')),
 	CONSTRAINT "subscriptions_billing_amount_check" CHECK("subscriptions"."billing_amount" > 0),
-	CONSTRAINT "subscriptions_slot_count_check" CHECK("subscriptions"."slot_count" > 0),
+	CONSTRAINT "subscriptions_slot_count_check" CHECK("subscriptions"."slot_count" >= 0),
 	CONSTRAINT "subscriptions_remind_check" CHECK("subscriptions"."remind_days_before" IS NULL OR "subscriptions"."remind_days_before" >= 0)
 );
 --> statement-breakpoint

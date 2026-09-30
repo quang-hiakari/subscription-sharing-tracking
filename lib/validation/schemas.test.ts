@@ -113,8 +113,9 @@ describe('subscriptionSchema', () => {
     expect('error' in parseForm(subscriptionSchema, fd({ ...valid, remindDaysBefore: '61' }))).toBe(true);
   });
 
-  it('rejects a non-positive slot count', () => {
-    expect('error' in parseForm(subscriptionSchema, fd({ ...valid, slotCount: '0' }))).toBe(true);
+  it('allows a zero slot count (nobody else sharing yet) but rejects negative', () => {
+    expect(parseForm(subscriptionSchema, fd({ ...valid, slotCount: '0' }))).toMatchObject({ data: { slotCount: 0 } });
+    expect('error' in parseForm(subscriptionSchema, fd({ ...valid, slotCount: '-1' }))).toBe(true);
   });
 
   it('requires at least one payment account', () => {

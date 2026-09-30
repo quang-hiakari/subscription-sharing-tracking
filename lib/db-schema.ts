@@ -67,8 +67,9 @@ export const subscriptions = sqliteTable(
     // lib/format/subscription-reference.ts), never stored.
     billingCycle: text('billing_cycle').notNull().default('monthly'),
     billingAmount: integer('billing_amount').notNull(),
-    // Max number of people sharing; used only for the reference calculation above.
-    slotCount: integer('slot_count').notNull().default(1),
+    // How many *other* people can share it, not counting the admin (0 = nobody else yet);
+    // used only for the reference calculation above (headcount is slotCount + 1).
+    slotCount: integer('slot_count').notNull().default(0),
     // Days before due to send the first reminder; NULL means the app default (7).
     remindDaysBefore: integer('remind_days_before'),
   },
@@ -76,7 +77,7 @@ export const subscriptions = sqliteTable(
     check('subscriptions_currency_check', sql`${t.currency} IN (${inList(CURRENCIES)})`),
     check('subscriptions_billing_cycle_check', sql`${t.billingCycle} IN (${inList(BILLING_CYCLES)})`),
     check('subscriptions_billing_amount_check', sql`${t.billingAmount} > 0`),
-    check('subscriptions_slot_count_check', sql`${t.slotCount} > 0`),
+    check('subscriptions_slot_count_check', sql`${t.slotCount} >= 0`),
     check('subscriptions_remind_check', sql`${t.remindDaysBefore} IS NULL OR ${t.remindDaysBefore} >= 0`),
   ],
 );

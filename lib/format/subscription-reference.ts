@@ -12,6 +12,9 @@ export interface SubscriptionReference {
  * Display-only reference numbers for a subscription: what it (and one share of it) costs per
  * month and per year, derived from whatever the admin actually entered (amount + cycle) —
  * never stored, never fed back into the amount fields.
+ *
+ * `slotCount` is how many *other* people can share it (not counting the admin), so the total
+ * headcount for splitting the cost is `slotCount + 1`.
  */
 export function computeSubscriptionReference(
   billingAmount: number,
@@ -20,11 +23,12 @@ export function computeSubscriptionReference(
 ): SubscriptionReference {
   const totalPerMonth = billingCycle === 'monthly' ? billingAmount : yearlyToMonthly(billingAmount);
   const totalPerYear = billingCycle === 'yearly' ? billingAmount : billingAmount * 12;
+  const headcount = slotCount + 1;
   return {
     totalPerMonth,
     totalPerYear,
-    perPersonPerMonth: Math.round(totalPerMonth / slotCount),
-    perPersonPerYear: Math.round(totalPerYear / slotCount),
+    perPersonPerMonth: Math.round(totalPerMonth / headcount),
+    perPersonPerYear: Math.round(totalPerYear / headcount),
   };
 }
 

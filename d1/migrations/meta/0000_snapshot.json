@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5a374c7b-574b-48f1-b773-12b62ebcd41c",
+  "id": "b46ca160-563a-4513-a6d7-7466718b393b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -821,7 +821,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": 1
+          "default": 0
         },
         "remind_days_before": {
           "name": "remind_days_before",
@@ -850,7 +850,7 @@
         },
         "subscriptions_slot_count_check": {
           "name": "subscriptions_slot_count_check",
-          "value": "\"subscriptions\".\"slot_count\" > 0"
+          "value": "\"subscriptions\".\"slot_count\" >= 0"
         },
         "subscriptions_remind_check": {
           "name": "subscriptions_remind_check",

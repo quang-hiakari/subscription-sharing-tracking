@@ -50,7 +50,8 @@ export const subscriptionSchema = z.object({
   currency,
   billingCycle,
   billingAmount: money('Số tiền không hợp lệ').positive('Số tiền phải lớn hơn 0'),
-  slotCount: id('Số slot không hợp lệ'),
+  // How many *other* people can share it, not counting the admin — 0 is valid (nobody yet).
+  slotCount: z.coerce.number({ invalid_type_error: 'Số slot không hợp lệ' }).int('Số slot không hợp lệ').min(0, 'Số slot không hợp lệ'),
   paymentAccountIds: idList('Chọn ít nhất một tài khoản nhận tiền'),
   // Empty input means "use the default lead time".
   remindDaysBefore: z.preprocess(

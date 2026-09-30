@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { computeBulkPeriodsReference, computeSubscriptionReference } from './subscription-reference';
 
 describe('computeSubscriptionReference', () => {
-  it('derives monthly totals from a monthly billing amount', () => {
-    expect(computeSubscriptionReference(1200, 'monthly', 4)).toEqual({
+  it('splits by slotCount + 1 (the admin plus that many extra slots)', () => {
+    // slotCount 3 -> 4 people total.
+    expect(computeSubscriptionReference(1200, 'monthly', 3)).toEqual({
       totalPerMonth: 1200,
       totalPerYear: 14400,
       perPersonPerMonth: 300,
@@ -12,7 +13,8 @@ describe('computeSubscriptionReference', () => {
   });
 
   it('derives yearly totals from a yearly billing amount', () => {
-    expect(computeSubscriptionReference(1_200_000, 'yearly', 4)).toEqual({
+    // slotCount 3 -> 4 people total.
+    expect(computeSubscriptionReference(1_200_000, 'yearly', 3)).toEqual({
       totalPerMonth: 100_000,
       totalPerYear: 1_200_000,
       perPersonPerMonth: 25_000,
@@ -21,8 +23,8 @@ describe('computeSubscriptionReference', () => {
   });
 
   it('rounds per-person amounts when they do not divide evenly', () => {
-    // 1000/month over 3 slots -> 333.33/month, 12000/year -> 4000/year.
-    expect(computeSubscriptionReference(1000, 'monthly', 3)).toEqual({
+    // slotCount 2 -> 3 people. 1000/month -> 333.33/month, 12000/year -> 4000/year.
+    expect(computeSubscriptionReference(1000, 'monthly', 2)).toEqual({
       totalPerMonth: 1000,
       totalPerYear: 12000,
       perPersonPerMonth: 333,
@@ -30,8 +32,8 @@ describe('computeSubscriptionReference', () => {
     });
   });
 
-  it('defaults slotCount of 1 to per-person equal to the total', () => {
-    expect(computeSubscriptionReference(900, 'monthly', 1)).toMatchObject({
+  it('slotCount 0 (nobody else yet) means the admin pays the full amount', () => {
+    expect(computeSubscriptionReference(900, 'monthly', 0)).toMatchObject({
       perPersonPerMonth: 900,
       perPersonPerYear: 10_800,
     });
