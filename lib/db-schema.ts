@@ -124,6 +124,8 @@ export const memberships = sqliteTable(
     isFamily: integer('is_family', { mode: 'boolean' }).notNull().default(false),
     // Paid up to (and including the day before) this date; also the next due date.
     paidThrough: text('paid_through').notNull(),
+    // Admin-only note about this member within this subscription (never shown to the member).
+    memo: text('memo'),
     archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
   },
   (t) => [

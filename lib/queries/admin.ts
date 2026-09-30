@@ -106,6 +106,7 @@ export async function listMemberships(includeArchived = false, subscriptionId?: 
       monthlyShare: memberships.monthlyShare,
       isFamily: memberships.isFamily,
       paidThrough: memberships.paidThrough,
+      memo: memberships.memo,
       remindDaysBefore: subscriptions.remindDaysBefore,
       archived: memberships.archived,
       memberArchived: members.archived,
@@ -132,6 +133,7 @@ export async function getMembership(id: number) {
       monthlyShare: memberships.monthlyShare,
       isFamily: memberships.isFamily,
       paidThrough: memberships.paidThrough,
+      memo: memberships.memo,
       archived: memberships.archived,
     })
     .from(memberships)

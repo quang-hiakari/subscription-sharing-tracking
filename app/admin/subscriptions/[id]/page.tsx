@@ -14,6 +14,7 @@ import { membershipStatus } from '@/lib/queries/membership-status';
 import { addMemberToSubscription, deleteSubscription, updateSubscription } from '../actions';
 import { SubscriptionFields } from '../subscription-fields';
 import { AddMemberForm } from './add-member-form';
+import { MemberEditModal } from './member-edit-modal';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,7 +120,13 @@ export default async function EditSubscriptionPage({
                 return (
                   <tr key={m.id} className={hidden ? 'text-gray-400' : undefined}>
                     <td className={td}>
-                      <Link href={`/admin/memberships/${m.id}`} className="font-medium text-blue-700 hover:underline">{m.memberName}</Link>
+                      <MemberEditModal
+                        membership={m}
+                        subscriptionId={id}
+                        billingCycle={billingCycle}
+                        triggerClassName="font-medium text-blue-700 hover:underline"
+                      />
+                      {m.memo && <div className="text-xs text-gray-500">{m.memo}</div>}
                     </td>
                     <td className={td}><Money amount={m.monthlyShare} currency={m.currency as Currency} fx={fx} /></td>
                     <td className={td}>{m.paidThrough}</td>

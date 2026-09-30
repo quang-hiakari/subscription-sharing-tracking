@@ -213,7 +213,12 @@ describe('membershipSchema', () => {
 
   it('update schema ignores member/subscription ids', () => {
     const r = parseForm(membershipUpdateSchema, fd({ ...valid, memberId: '999' }));
-    expect(r).toEqual({ data: { currency: 'JPY', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01' } });
+    expect(r).toEqual({ data: { currency: 'JPY', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01', memo: null } });
+  });
+
+  it('trims memo and treats blank as null', () => {
+    expect(parseForm(membershipCreateSchema, fd({ ...valid, memo: '  Bạn của Chi  ' }))).toMatchObject({ data: { memo: 'Bạn của Chi' } });
+    expect(parseForm(membershipCreateSchema, fd({ ...valid, memo: '   ' }))).toMatchObject({ data: { memo: null } });
   });
 });
 
@@ -222,7 +227,7 @@ describe('addMemberToSubscriptionSchema', () => {
 
   it('parses the existing-member branch', () => {
     expect(parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'existing', memberId: '5' }))).toEqual({
-      data: { mode: 'existing', currency: 'JPY', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01', memberId: 5 },
+      data: { mode: 'existing', currency: 'JPY', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01', memberId: 5, memo: null },
     });
   });
 
@@ -230,7 +235,7 @@ describe('addMemberToSubscriptionSchema', () => {
     expect(
       parseForm(addMemberToSubscriptionSchema, fd({ ...terms, mode: 'new', name: '  An ', email: ' An@Example.COM ' })),
     ).toEqual({
-      data: { mode: 'new', currency: 'JPY', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01', name: 'An', email: 'an@example.com' },
+      data: { mode: 'new', currency: 'JPY', monthlyShare: 300, isFamily: false, paidThrough: '2026-10-01', name: 'An', email: 'an@example.com', memo: null },
     });
   });
 

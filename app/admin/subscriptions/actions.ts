@@ -58,7 +58,7 @@ export async function updateSubscription(_prev: FormState, formData: FormData): 
 
   await (await getDrizzle()).update(subscriptions).set(values).where(eq(subscriptions.id, id));
   await setAccountLinks(id, paymentAccountIds);
-  redirect(LIST);
+  redirect(`/admin/subscriptions/${id}`);
 }
 
 export async function deleteSubscription(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -117,6 +117,7 @@ export async function addMemberToSubscription(_prev: FormState, formData: FormDa
     monthlyShare: parsed.data.monthlyShare,
     isFamily: parsed.data.isFamily,
     paidThrough: parsed.data.paidThrough,
+    memo: parsed.data.memo,
   });
   redirect(`/admin/subscriptions/${subscriptionId}`);
 }

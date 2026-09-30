@@ -15,6 +15,13 @@
       "when": 1790753000000,
       "tag": "0001_slot_count_check",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790752575280,
+      "tag": "0002_add_memo",
+      "breakpoints": true
     }
   ]
 }

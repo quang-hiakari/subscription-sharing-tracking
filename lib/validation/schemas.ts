@@ -76,6 +76,8 @@ export const membershipCreateSchema = z.object({
   monthlyShare: money('Số tiền mỗi tháng không hợp lệ').min(0, 'Số tiền mỗi tháng không hợp lệ'),
   isFamily: checkbox,
   paidThrough: dateString,
+  // Admin-only note about this member within this subscription; never shown to the member.
+  memo: z.preprocess(emptyToNull, z.string().trim().max(200, 'Ghi chú tối đa 200 ký tự').nullable()),
 });
 
 // Member and subscription are fixed once created; only terms can change.
@@ -84,6 +86,7 @@ export const membershipUpdateSchema = membershipCreateSchema.pick({
   monthlyShare: true,
   isFamily: true,
   paidThrough: true,
+  memo: true,
 });
 
 // Adding a member to a subscription: either an existing member (by id) or a brand-new one

@@ -51,7 +51,10 @@ export async function updateMembership(_prev: FormState, formData: FormData): Pr
   if (!(await getMembership(id))) return { error: 'Không tìm thấy thành viên trong subscription.' };
 
   await (await getDrizzle()).update(memberships).set(parsed.data).where(eq(memberships.id, id));
-  redirect(`${DETAIL}/${id}`);
+  // Called both from this membership's own page (no returnTo, stays here) and from the quick-edit
+  // popup on its subscription's page (returnTo set, so saving closes the popup and stays there).
+  const returnTo = formData.get('returnTo');
+  redirect(typeof returnTo === 'string' && returnTo ? returnTo : `${DETAIL}/${id}`);
 }
 
 /** Hard delete only when there is no payment history (reminder log entries go with it); otherwise archive. */

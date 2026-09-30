@@ -1,4 +1,4 @@
-import { CheckboxField, Field, SelectField } from '@/components/ui/fields';
+import { CheckboxField, Field, SelectField, TextareaField } from '@/components/ui/fields';
 import { MoneyField } from '@/components/ui/money-field';
 import { CURRENCY_OPTIONS } from '@/lib/currency-options';
 import type { BillingCycle } from '@/lib/db-schema';
@@ -8,6 +8,7 @@ interface Defaults {
   monthlyShare?: number;
   isFamily?: boolean;
   paidThrough?: string;
+  memo?: string | null;
 }
 
 /** Terms shared by the create and edit forms. The share amount follows the subscription's own
@@ -51,6 +52,12 @@ export function MembershipTermsFields({
         name="isFamily"
         defaultChecked={defaults.isFamily}
         hint="Không bị nhắc và không tính là nợ."
+      />
+      <TextareaField
+        label="Ghi chú (chỉ admin thấy)"
+        name="memo"
+        defaultValue={defaults.memo ?? ''}
+        maxLength={200}
       />
     </>
   );
