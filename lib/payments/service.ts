@@ -96,8 +96,13 @@ export async function createPaymentRequest(
   return { ok: true };
 }
 
-/** Admin approves a pending payment and moves the due date forward, atomically. */
-export async function approvePayment(db: D1Database, paymentId: number, now: Date): Promise<ServiceResult> {
+/**
+ * Admin approves a pending payment and moves the due date forward, atomically.
+ * `monthsOverride`, when given, replaces the periods the member originally reported (e.g. they
+ * typed 1 by mistake for a bulk 6-month/1-year transfer) — the approved payment's own
+ * `months_covered` is corrected to match, so payment history stays consistent with the date move.
+ */
+export async function approvePayment(db: D1Database, paymentId: number, now: Date, monthsOverride?: number): Promise<ServiceResult> {
   const payment = await db
     .prepare('SELECT id, membership_id, months_covered, status FROM payments WHERE id = ?')
     .bind(paymentId)
@@ -108,8 +113,9 @@ export async function approvePayment(db: D1Database, paymentId: number, now: Dat
   const membership = await loadMembership(db, payment.membership_id);
   if (!membership) return fail('Không tìm thấy subscription của thanh toán này.');
 
+  const monthsCovered = monthsOverride ?? payment.months_covered;
   const oldDue = membership.paid_through;
-  const newDue = addMonths(oldDue, periodsToMonths(payment.months_covered, membership.billing_cycle));
+  const newDue = addMonths(oldDue, periodsToMonths(monthsCovered, membership.billing_cycle));
   const decidedAt = now.getTime();
 
   // Statement 1 approves only while the payment is pending AND the due date is still what we read.
@@ -118,11 +124,11 @@ export async function approvePayment(db: D1Database, paymentId: number, now: Dat
   const [approved] = await db.batch([
     db
       .prepare(
-        `UPDATE payments SET status = 'approved', decided_at = ?
+        `UPDATE payments SET status = 'approved', decided_at = ?, months_covered = ?
          WHERE id = ? AND status = 'pending'
            AND EXISTS (SELECT 1 FROM memberships WHERE id = ? AND paid_through = ?)`,
       )
-      .bind(decidedAt, paymentId, payment.membership_id, oldDue),
+      .bind(decidedAt, monthsCovered, paymentId, payment.membership_id, oldDue),
     db
       .prepare(
         `UPDATE memberships SET paid_through = ?

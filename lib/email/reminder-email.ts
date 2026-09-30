@@ -1,4 +1,4 @@
-import type { Currency } from '../db-schema';
+import type { BillingCycle, Currency } from '../db-schema';
 import { formatMoney } from '../format/money';
 import type { BulkPeriodsReference } from '../format/subscription-reference';
 import { emailButton, emailLayout, escapeHtml } from './html';
@@ -7,7 +7,8 @@ export interface ReminderEmailInput {
   memberName: string;
   subscriptionName: string;
   currency: Currency;
-  /** The member's amount per period (per month for a monthly subscription). */
+  billingCycle: BillingCycle;
+  /** The member's amount per period (per month for a monthly subscription, per year for yearly). */
   monthlyShare: number;
   dueDate: string;
   /** Negative once overdue. */
@@ -32,6 +33,7 @@ function headlineFor(daysUntilDue: number): string {
 }
 
 export function buildReminderEmail(i: ReminderEmailInput): { subject: string; html: string } {
+  const cycleWord = i.billingCycle === 'yearly' ? 'năm' : 'tháng';
   const row = (label: string, value: string) =>
     `<tr><td style="padding:4px 12px 4px 0;color:#666;vertical-align:top">${label}</td><td style="padding:4px 0">${value}</td></tr>`;
 
@@ -41,7 +43,7 @@ export function buildReminderEmail(i: ReminderEmailInput): { subject: string; ht
     <table style="font-size:14px;border-collapse:collapse">
       ${row('Subscription', escapeHtml(i.subscriptionName))}
       ${row('Hạn thanh toán', escapeHtml(i.dueDate))}
-      ${row('Mỗi tháng', escapeHtml(formatMoney(i.monthlyShare, i.currency)))}
+      ${row(`Mỗi ${cycleWord}`, escapeHtml(formatMoney(i.monthlyShare, i.currency)))}
       ${i.bulkReference ? row('Trả trước 6 / 12 tháng', escapeHtml(`${formatMoney(i.bulkReference.sixPeriods, i.currency)} / ${formatMoney(i.bulkReference.twelvePeriods, i.currency)}`)) : ''}
       ${row('Chuyển tiền tới', escapeHtml(i.accountDetails).replace(/\n/g, '<br>'))}
     </table>

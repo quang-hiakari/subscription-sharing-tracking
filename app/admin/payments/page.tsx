@@ -1,4 +1,5 @@
 import { ActionForm } from '@/components/action-form';
+import { ApproveMonthsChoice } from '@/components/approve-months-choice';
 import { FxNote, Money } from '@/components/money';
 import { PaymentStatusBadge } from '@/components/payment-history';
 import { Field } from '@/components/ui/fields';
@@ -44,7 +45,9 @@ export default async function PaymentsPage() {
                 </div>
                 {p.note && <div className="text-sm">Ghi chú: {p.note}</div>}
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <ActionForm action={approve.bind(null, p.id)} submitLabel="Xác nhận đã nhận tiền" />
+                  <ActionForm action={approve.bind(null, p.id)} submitLabel="Xác nhận đã nhận tiền">
+                    <ApproveMonthsChoice reportedMonths={p.monthsCovered} />
+                  </ActionForm>
                   <ActionForm action={reject.bind(null, p.id)} submitLabel="Từ chối" variant="secondary">
                     <Field label="Lý do từ chối" name="reason" required maxLength={200} />
                   </ActionForm>

@@ -106,6 +106,7 @@ function reminderMail(c: Candidate, today: string, appUrl: string, accounts: Acc
     memberName: c.member_name,
     subscriptionName: c.subscription_name,
     currency: c.currency,
+    billingCycle: c.billing_cycle,
     monthlyShare: c.monthly_share,
     dueDate: c.paid_through,
     daysUntilDue: daysBetween(today, c.paid_through),

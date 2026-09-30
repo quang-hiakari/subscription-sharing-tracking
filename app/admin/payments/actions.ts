@@ -6,13 +6,15 @@ import { getDB } from '@/lib/db';
 import type { FormState } from '@/lib/form-state';
 import { notifyPaymentRejected } from '@/lib/payments/notify';
 import { approvePayment, rejectPayment } from '@/lib/payments/service';
-import { parseForm, rejectSchema } from '@/lib/validation/schemas';
+import { approvePaymentSchema, parseForm, rejectSchema } from '@/lib/validation/schemas';
 
 const QUEUE = '/admin/payments';
 
-export async function approve(paymentId: number, _prev: FormState, _formData: FormData): Promise<FormState> {
+export async function approve(paymentId: number, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
-  const result = await approvePayment(getDB(), paymentId, new Date());
+  const parsed = parseForm(approvePaymentSchema, formData);
+  if ('error' in parsed) return { error: parsed.error };
+  const result = await approvePayment(getDB(), paymentId, new Date(), parsed.data.monthsOverride ?? undefined);
   if (!result.ok) return { error: result.error };
   redirect(QUEUE);
 }

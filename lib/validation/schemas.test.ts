@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addMemberToSubscriptionSchema,
+  approvePaymentSchema,
   memberSchema,
   membershipCreateSchema,
   membershipUpdateSchema,
@@ -155,6 +156,32 @@ describe('paymentInputSchema', () => {
     expect(parseForm(paymentInputSchema, fd({ monthsCovered: '1', amount: '0' }))).toEqual({ error: 'Số tiền phải lớn hơn 0' });
     expect(parseForm(paymentInputSchema, fd({ monthsCovered: '1', amount: '9.5' }))).toEqual({ error: 'Số tiền không hợp lệ' });
     expect('error' in parseForm(paymentInputSchema, fd({ monthsCovered: '1', note: 'x'.repeat(201) }))).toBe(true);
+  });
+});
+
+describe('approvePaymentSchema', () => {
+  it('defaults to keeping the reported months when nothing is chosen', () => {
+    expect(parseForm(approvePaymentSchema, fd({}))).toEqual({ data: { monthsOverride: null } });
+  });
+
+  it('overrides to 6 or 12 from the preset radios', () => {
+    expect(parseForm(approvePaymentSchema, fd({ monthsChoice: '6' }))).toEqual({ data: { monthsOverride: 6 } });
+    expect(parseForm(approvePaymentSchema, fd({ monthsChoice: '12' }))).toEqual({ data: { monthsOverride: 12 } });
+  });
+
+  it('overrides to the custom number only when that choice is picked', () => {
+    expect(parseForm(approvePaymentSchema, fd({ monthsChoice: 'custom', customMonths: '9' }))).toEqual({ data: { monthsOverride: 9 } });
+    // A stray value in the (disabled, unsubmitted in practice) custom field is ignored unless "custom" was chosen.
+    expect(parseForm(approvePaymentSchema, fd({ monthsChoice: 'keep', customMonths: '9' }))).toEqual({ data: { monthsOverride: null } });
+  });
+
+  it('requires a number when "custom" is chosen but none was typed', () => {
+    expect(parseForm(approvePaymentSchema, fd({ monthsChoice: 'custom' }))).toEqual({ error: 'Nhập số tháng' });
+  });
+
+  it('rejects an out-of-range custom number', () => {
+    expect('error' in parseForm(approvePaymentSchema, fd({ monthsChoice: 'custom', customMonths: '0' }))).toBe(true);
+    expect('error' in parseForm(approvePaymentSchema, fd({ monthsChoice: 'custom', customMonths: '37' }))).toBe(true);
   });
 });
 

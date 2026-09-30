@@ -136,6 +136,19 @@ describe('approvePayment', () => {
     expect(await approvePayment(db, 999, NOW)).toEqual({ ok: false, error: 'Không tìm thấy thanh toán.' });
     expect(paidThrough(1)).toBe('2026-10-01');
   });
+
+  it('an override replaces the reported months for both the due date move and the stored payment', async () => {
+    await request(1, 1, { monthsCovered: 1 }); // member typed 1 by mistake, actually paid a year
+    expect(await approvePayment(db, 1, NOW, 12)).toEqual({ ok: true });
+    expect(paidThrough(1)).toBe('2027-10-01');
+    expect(payment(1)).toMatchObject({ months_covered: 12 });
+  });
+
+  it('no override keeps using what was reported', async () => {
+    await request(1, 1, { monthsCovered: 3 });
+    expect(await approvePayment(db, 1, NOW)).toEqual({ ok: true });
+    expect(payment(1)).toMatchObject({ months_covered: 3 });
+  });
 });
 
 describe('yearly billing cycle', () => {

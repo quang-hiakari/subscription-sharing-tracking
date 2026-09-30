@@ -6,6 +6,7 @@ const base = {
   memberName: 'An',
   subscriptionName: 'Youtube',
   currency: 'JPY' as const,
+  billingCycle: 'monthly' as const,
   monthlyShare: 300,
   dueDate: '2026-10-01',
   accountDetails: 'Ngân hàng: Yucho\nSố tài khoản: 1234567\nChủ tài khoản: Nguyen A',
@@ -27,6 +28,16 @@ describe('buildReminderEmail', () => {
     expect(buildReminderEmail({ ...base, daysUntilDue: 0 }).subject).toBe('Hôm nay đến hạn thanh toán Youtube');
     expect(buildReminderEmail({ ...base, daysUntilDue: -6 }).subject).toBe('Quá hạn thanh toán Youtube 6 ngày');
     expect(buildReminderEmail({ ...base, daysUntilDue: -6 }).html).toContain('Đã quá hạn thanh toán 6 ngày.');
+  });
+
+  it('labels the amount by the subscription\'s own cycle, not always "tháng"', () => {
+    const monthly = buildReminderEmail({ ...base, daysUntilDue: 5 });
+    expect(monthly.html).toContain('Mỗi tháng');
+    expect(monthly.html).not.toContain('Mỗi năm');
+
+    const yearly = buildReminderEmail({ ...base, billingCycle: 'yearly', monthlyShare: 300_000, daysUntilDue: 5 });
+    expect(yearly.html).toContain('Mỗi năm');
+    expect(yearly.html).not.toContain('Mỗi tháng');
   });
 
   it('shows a 6/12-month upfront reference only when given one', () => {

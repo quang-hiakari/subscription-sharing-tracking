@@ -116,19 +116,39 @@ export function parseForm<S extends z.ZodTypeAny>(schema: S, formData: FormData)
   return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
 }
 
+const monthsCount = z.coerce
+  .number({ invalid_type_error: 'Số tháng không hợp lệ' })
+  .int('Số tháng không hợp lệ')
+  .min(1, 'Số tháng không hợp lệ')
+  .max(MAX_MONTHS_PER_PAYMENT, `Tối đa ${MAX_MONTHS_PER_PAYMENT} tháng`);
+
 // A payment a member reports or an admin records. Empty amount means "monthly share x months".
 export const paymentInputSchema = z.object({
-  monthsCovered: z.coerce
-    .number({ invalid_type_error: 'Số tháng không hợp lệ' })
-    .int('Số tháng không hợp lệ')
-    .min(1, 'Số tháng không hợp lệ')
-    .max(MAX_MONTHS_PER_PAYMENT, `Tối đa ${MAX_MONTHS_PER_PAYMENT} tháng`),
+  monthsCovered: monthsCount,
   amount: z.preprocess(
     emptyToNull,
     z.coerce.number({ invalid_type_error: 'Số tiền không hợp lệ' }).int('Số tiền không hợp lệ').positive('Số tiền phải lớn hơn 0').nullable(),
   ),
   note: z.preprocess(emptyToNull, z.string().trim().max(200, 'Ghi chú tối đa 200 ký tự').nullable()),
 });
+
+// Approving a pending payment: keep the periods the member reported, jump to a common bulk case
+// (6 months / 1 year), or type any other number — the last one only via its own checkbox, so a
+// stray disabled/empty custom field never silently overrides the choice already made.
+export const approvePaymentSchema = z
+  .object({
+    monthsChoice: z.enum(['keep', '6', '12', 'custom']).default('keep'),
+    customMonths: z.preprocess(emptyToNull, monthsCount.nullable()),
+  })
+  .superRefine((data, ctx) => {
+    if (data.monthsChoice === 'custom' && data.customMonths == null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Nhập số tháng', path: ['customMonths'] });
+    }
+  })
+  .transform((data) => ({
+    monthsOverride:
+      data.monthsChoice === 'keep' ? null : data.monthsChoice === 'custom' ? data.customMonths : Number(data.monthsChoice),
+  }));
 
 export const rejectSchema = z.object({
   reason: z.string().trim().min(1, 'Nhập lý do từ chối').max(200, 'Lý do tối đa 200 ký tự'),
