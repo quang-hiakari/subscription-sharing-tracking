@@ -22,7 +22,9 @@ export function Modal({
       <button type="button" onClick={() => ref.current?.showModal()} className={triggerClassName}>
         {trigger}
       </button>
-      <dialog ref={ref} className="w-[min(92vw,480px)] rounded-lg border border-gray-200 p-0 backdrop:bg-black/30">
+      {/* Tailwind's preflight resets `margin: 0` globally, which kills <dialog>'s native
+       * margin:auto centering — set it back explicitly so the popup lands mid-screen. */}
+      <dialog ref={ref} className="m-auto w-[min(92vw,480px)] rounded-lg border border-gray-200 p-0 backdrop:bg-black/30">
         <div className="p-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-medium">{title}</h3>
