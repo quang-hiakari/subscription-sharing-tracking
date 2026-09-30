@@ -182,6 +182,17 @@ export async function countMembershipsForSubscription(subscriptionId: number): P
   return row.n;
 }
 
+/** Active (not archived, member not archived) memberships — what actually occupies a slot. */
+export async function countActiveMembershipsForSubscription(subscriptionId: number): Promise<number> {
+  const db = await getDrizzle();
+  const [row] = await db
+    .select({ n: count() })
+    .from(memberships)
+    .innerJoin(members, eq(memberships.memberId, members.id))
+    .where(and(eq(memberships.subscriptionId, subscriptionId), eq(memberships.archived, false), eq(members.archived, false)));
+  return row.n;
+}
+
 export async function countMembershipsForMember(memberId: number): Promise<number> {
   const db = await getDrizzle();
   const [row] = await db.select({ n: count() }).from(memberships).where(eq(memberships.memberId, memberId));

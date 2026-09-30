@@ -8,6 +8,13 @@
       "when": 1790750254594,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790753000000,
+      "tag": "0001_slot_count_check",
+      "breakpoints": true
     }
   ]
 }

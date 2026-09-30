@@ -8,7 +8,7 @@ import { requireAdmin } from '@/lib/auth/require-role';
 import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
 import { computeSubscriptionReference } from '@/lib/format/subscription-reference';
-import { getSubscription, listAccounts, listAccountsForSubscription, listAvailableMembersForSubscription, listMemberships } from '@/lib/queries/admin';
+import { countActiveMembershipsForSubscription, getSubscription, listAccounts, listAccountsForSubscription, listAvailableMembersForSubscription, listMemberships } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
 import { membershipStatus } from '@/lib/queries/membership-status';
 import { addMemberToSubscription, deleteSubscription, updateSubscription } from '../actions';
@@ -30,18 +30,20 @@ export default async function EditSubscriptionPage({
   if (!subscription) notFound();
 
   const showArchived = (await searchParams).archived === '1';
-  const [accounts, linkedAccounts, members, availableMembers, fx] = await Promise.all([
+  const [accounts, linkedAccounts, members, availableMembers, fx, activeCount] = await Promise.all([
     listAccounts(),
     listAccountsForSubscription(id),
     listMemberships(showArchived, id),
     listAvailableMembersForSubscription(id),
     getFx(),
+    countActiveMembershipsForSubscription(id),
   ]);
   const currency = subscription.currency as Currency;
   const billingCycle = subscription.billingCycle as BillingCycle;
   const today = todayJst();
   const cycleWord = billingCycle === 'yearly' ? 'năm' : 'tháng';
   const reference = computeSubscriptionReference(subscription.billingAmount, billingCycle, subscription.slotCount);
+  const isFull = activeCount >= subscription.slotCount;
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -76,9 +78,16 @@ export default async function EditSubscriptionPage({
         </Card>
 
         <Card title="Thêm thành viên">
-          <ActionForm action={addMemberToSubscription} submitLabel="Thêm thành viên" hidden={{ id }}>
-            <AddMemberForm availableMembers={availableMembers} paidThrough={today} billingCycle={billingCycle} defaultCurrency={currency} />
-          </ActionForm>
+          <p className="mb-3 text-sm text-gray-500">
+            Đã dùng {activeCount}/{subscription.slotCount} slot chia sẻ.
+          </p>
+          {isFull ? (
+            <EmptyState>Đã đủ slot chia sẻ. Ẩn bớt người hoặc tăng số slot ở phần thông tin subscription để thêm.</EmptyState>
+          ) : (
+            <ActionForm action={addMemberToSubscription} submitLabel="Thêm thành viên" hidden={{ id }}>
+              <AddMemberForm availableMembers={availableMembers} paidThrough={today} billingCycle={billingCycle} defaultCurrency={currency} />
+            </ActionForm>
+          )}
         </Card>
       </div>
 

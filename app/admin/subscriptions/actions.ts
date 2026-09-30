@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth/require-role';
 import { getDrizzle } from '@/lib/db';
 import { members, memberships, subscriptionPaymentAccounts, subscriptions } from '@/lib/db-schema';
 import { formId, type FormState } from '@/lib/form-state';
-import { countMembershipsForSubscription, emailTaken, getMember, getSubscription, listAccounts, membershipExists } from '@/lib/queries/admin';
+import { countActiveMembershipsForSubscription, countMembershipsForSubscription, emailTaken, getMember, getSubscription, listAccounts, membershipExists } from '@/lib/queries/admin';
 import { addMemberToSubscriptionSchema, parseForm, subscriptionSchema } from '@/lib/validation/schemas';
 
 const LIST = '/admin/subscriptions';
@@ -83,6 +83,13 @@ export async function addMemberToSubscription(_prev: FormState, formData: FormDa
 
   const subscription = await getSubscription(subscriptionId);
   if (!subscription) return { error: 'Subscription không tồn tại.' };
+
+  // slotCount is how many *other* people (not the admin) can share it, and the admin is never a
+  // `memberships` row, so the cap on active membership rows is exactly slotCount.
+  const activeCount = await countActiveMembershipsForSubscription(subscriptionId);
+  if (activeCount >= subscription.slotCount) {
+    return { error: `Đã đủ ${subscription.slotCount} người chia sẻ. Ẩn bớt người hoặc tăng số slot trước.` };
+  }
 
   let memberId: number;
   if (parsed.data.mode === 'existing') {
