@@ -4,10 +4,10 @@ import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/require-role';
 import { getDrizzle } from '@/lib/db';
-import { subscriptionPaymentAccounts, subscriptions } from '@/lib/db-schema';
+import { members, memberships, subscriptionPaymentAccounts, subscriptions } from '@/lib/db-schema';
 import type { FormState } from '@/lib/form-state';
-import { countMembershipsForSubscription, getSubscription, listAccounts } from '@/lib/queries/admin';
-import { parseForm, subscriptionSchema } from '@/lib/validation/schemas';
+import { countMembershipsForSubscription, emailTaken, getMember, getSubscription, listAccounts, membershipExists } from '@/lib/queries/admin';
+import { addMemberToSubscriptionSchema, parseForm, subscriptionSchema } from '@/lib/validation/schemas';
 
 const LIST = '/admin/subscriptions';
 
@@ -66,4 +66,46 @@ export async function deleteSubscription(id: number, _prev: FormState, _formData
   }
   await getDrizzle().delete(subscriptions).where(eq(subscriptions.id, id));
   redirect(LIST);
+}
+
+/** Adds a member to a subscription: an existing member (by id) or a brand-new one (name + email), in one step.
+ * Lives here (not in memberships/actions.ts) because its only caller is this subscription's own detail page —
+ * co-locating avoids cross-directory Server Action references, which Cloudflare Pages' per-route edge
+ * function splitting does not reliably bundle (calling it 404s in production despite working locally). */
+export async function addMemberToSubscription(subscriptionId: number, _prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = parseForm(addMemberToSubscriptionSchema, formData);
+  if ('error' in parsed) return { error: parsed.error };
+
+  const subscription = await getSubscription(subscriptionId);
+  if (!subscription) return { error: 'Subscription không tồn tại.' };
+
+  let memberId: number;
+  if (parsed.data.mode === 'existing') {
+    const member = await getMember(parsed.data.memberId);
+    if (!member) return { error: 'Người dùng không tồn tại.' };
+    if (member.archived) return { error: 'Người dùng đã bị ẩn. Hãy bỏ ẩn trước.' };
+    memberId = member.id;
+  } else {
+    if (await emailTaken(parsed.data.email)) return { error: 'Email này đã được dùng cho người khác.' };
+    const [row] = await getDrizzle()
+      .insert(members)
+      .values({ name: parsed.data.name, email: parsed.data.email })
+      .returning({ id: members.id });
+    memberId = row.id;
+  }
+
+  if (await membershipExists(memberId, subscriptionId)) {
+    return { error: 'Người này đã có trong subscription này (có thể đang bị ẩn).' };
+  }
+
+  await getDrizzle().insert(memberships).values({
+    memberId,
+    subscriptionId,
+    currency: parsed.data.currency,
+    monthlyShare: parsed.data.monthlyShare,
+    isFamily: parsed.data.isFamily,
+    paidThrough: parsed.data.paidThrough,
+  });
+  redirect(`/admin/subscriptions/${subscriptionId}`);
 }

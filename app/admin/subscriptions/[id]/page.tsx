@@ -8,11 +8,10 @@ import { requireAdmin } from '@/lib/auth/require-role';
 import type { BillingCycle, Currency } from '@/lib/db-schema';
 import { todayJst } from '@/lib/format/date';
 import { computeSubscriptionReference } from '@/lib/format/subscription-reference';
-import { addMemberToSubscription } from '@/app/admin/memberships/actions';
 import { getSubscription, listAccounts, listAccountsForSubscription, listAvailableMembersForSubscription, listMemberships } from '@/lib/queries/admin';
 import { getFx } from '@/lib/queries/fx';
 import { membershipStatus } from '@/lib/queries/membership-status';
-import { deleteSubscription, updateSubscription } from '../actions';
+import { addMemberToSubscription, deleteSubscription, updateSubscription } from '../actions';
 import { SubscriptionFields } from '../subscription-fields';
 import { AddMemberForm } from './add-member-form';
 

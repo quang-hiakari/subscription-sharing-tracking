@@ -4,13 +4,13 @@ import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/require-role';
 import { getDrizzle, getDB } from '@/lib/db';
-import { members, memberships, reminderLog } from '@/lib/db-schema';
+import { memberships, reminderLog } from '@/lib/db-schema';
 import type { FormState } from '@/lib/form-state';
-import { countPaymentsForMembership, emailTaken, getMember, getMembership, getSubscription, membershipExists } from '@/lib/queries/admin';
+import { countPaymentsForMembership, getMembership } from '@/lib/queries/admin';
 import { sendMail } from '@/lib/email/send-mail';
 import { recordPayment } from '@/lib/payments/service';
 import { sendManualReminder } from '@/lib/reminders/run';
-import { addMemberToSubscriptionSchema, membershipUpdateSchema, parseForm, paymentInputSchema } from '@/lib/validation/schemas';
+import { membershipUpdateSchema, parseForm, paymentInputSchema } from '@/lib/validation/schemas';
 
 // Per-membership detail page (history, reminder, record payment). There is no membership list
 // page anymore — membership management lives on the owning subscription's detail page.
@@ -36,45 +36,6 @@ export async function recordMembershipPayment(id: number, _prev: FormState, form
   const result = await recordPayment(getDB(), { membershipId: id, ...parsed.data }, new Date());
   if (!result.ok) return { error: result.error };
   redirect(`${DETAIL}/${id}`);
-}
-
-/** Adds a member to a subscription: an existing member (by id) or a brand-new one (name + email), in one step. */
-export async function addMemberToSubscription(subscriptionId: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
-  const parsed = parseForm(addMemberToSubscriptionSchema, formData);
-  if ('error' in parsed) return { error: parsed.error };
-
-  const subscription = await getSubscription(subscriptionId);
-  if (!subscription) return { error: 'Subscription không tồn tại.' };
-
-  let memberId: number;
-  if (parsed.data.mode === 'existing') {
-    const member = await getMember(parsed.data.memberId);
-    if (!member) return { error: 'Người dùng không tồn tại.' };
-    if (member.archived) return { error: 'Người dùng đã bị ẩn. Hãy bỏ ẩn trước.' };
-    memberId = member.id;
-  } else {
-    if (await emailTaken(parsed.data.email)) return { error: 'Email này đã được dùng cho người khác.' };
-    const [row] = await getDrizzle()
-      .insert(members)
-      .values({ name: parsed.data.name, email: parsed.data.email })
-      .returning({ id: members.id });
-    memberId = row.id;
-  }
-
-  if (await membershipExists(memberId, subscriptionId)) {
-    return { error: 'Người này đã có trong subscription này (có thể đang bị ẩn).' };
-  }
-
-  await getDrizzle().insert(memberships).values({
-    memberId,
-    subscriptionId,
-    currency: parsed.data.currency,
-    monthlyShare: parsed.data.monthlyShare,
-    isFamily: parsed.data.isFamily,
-    paidThrough: parsed.data.paidThrough,
-  });
-  redirect(`/admin/subscriptions/${subscriptionId}`);
 }
 
 export async function updateMembership(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
