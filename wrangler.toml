@@ -2,7 +2,10 @@ name = "subscription-sharing-tracking"
 main = ".open-next/worker.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
-workers_dev = true
+
+routes = [
+  { pattern = "subscriptions.quangnguyen.cc", custom_domain = true }
+]
 
 [assets]
 directory = ".open-next/assets"
